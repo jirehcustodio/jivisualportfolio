@@ -1,0 +1,6 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Production sitemap (update the domain when deploying)
+Sitemap: https://jivisualportfolio.com/sitemap.xml

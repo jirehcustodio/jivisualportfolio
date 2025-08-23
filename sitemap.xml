@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://Jirehportfolio.com/</loc>
+    <changefreq>weekly</changefreq>
+  </url>
+  <url>
+    <loc>https://Jirehportfolio.com/demo-portfolio-site.html</loc>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://Jirehportfolio.com/demo-resume-analyzer.html</loc>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://Jirehportfolio.com/demo-smart-home.html</loc>
+    <changefreq>monthly</changefreq>
+  </url>
+  <url>
+    <loc>https://Jirehportfolio.com/offline.html</loc>
+    <changefreq>monthly</changefreq>
+  </url>
+</urlset>

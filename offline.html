@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline • Gen Z Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { display:grid; place-items:center; min-height: 100vh; }
+    .offline-card { text-align:center; background: rgba(255,255,255,0.7); border: 1px solid var(--card-border); border-radius: 16px; padding: 1.2rem 1rem; box-shadow: var(--shadow-s); max-width: 520px; }
+    .offline-emoji { font-size: 2rem; }
+    .offline-title { font-weight: 800; font-size: 1.4rem; margin: 0.3rem 0; }
+    .offline-actions { display:flex; gap:.6rem; justify-content:center; margin-top: .6rem; }
+  </style>
+</head>
+<body>
+  <div class="offline-card">
+    <div class="offline-emoji">📡</div>
+    <div class="offline-title">You’re offline</div>
+    <p>Don’t worry. The main parts of this portfolio work offline. Reconnect for live demos and external links.</p>
+    <div class="offline-actions">
+      <a class="cta-btn" href="index.html">Go Home</a>
+      <a class="cta-btn ghost" href="#" onclick="location.reload()">Retry</a>
+    </div>
+  </div>
+</body>
+</html>

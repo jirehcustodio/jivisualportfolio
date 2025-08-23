@@ -1,0 +1,187 @@
+Gen Z Portfolio — Manual / Notes
+================================
+
+Quick Start
+-----------
+- Quick Intake: Fill First name, Surname, Age, and pick your Type.
+  - Student → School field appears
+  - Employee → Company field appears
+  - Other → no extra fields
+- Continue: Splash intro plays, then the portfolio reveals with a small welcome card.
+- Replay splash: Add #intro to the URL to replay once this session (e.g., index.html#intro).
+- Tabs: Home, Coding, Creative, About, Contact. Deep links: index.html#home, #coding, #creative, #about, #contact
+- Command Palette: Press Cmd+K (Mac) / Ctrl+K (Win/Linux). Type to search; ↑/↓ to navigate; PageUp/PageDown/Home/End to move faster; Enter to run; Esc to close.
+- Explore Work: Jumps to Coding tab. My Info: Jumps to About tab.
+- Theme Toggle (header): Switch between default Pink gradient and Ambient auto‑accent.
+- Download Resume: The hero button downloads portfolio/resume.pdf.
+
+UX Features
+-----------
+- 3D Tilt: Cards subtly rotate toward your cursor/finger (hero tiles + coding cards). Respects “prefers-reduced-motion”.
+- Spotlight on hover: Non‑hovered cards dim for focus in hero panel and coding grid.
+- Sliding Sidebar: Hidden at left edge; reveal on hover/focus. Has an invisible hot‑zone and a small visible handle.
+- Glassmorphism Hero: Animated color wash, gradient border, inner sheen.
+- Micro‑interactions: Buttons zoom on hover/active (CTAs, sidebar, splash controls).
+- Command‑K: Quick actions for tabs, projects, social links, “Install App”, sound/haptics toggles, themes, and “Download Resume”. Keyboard paging supported.
+- Sound & Haptics: Palette plays soft beeps and haptics on open/close/move/select. Toggle via palette.
+- Theme System: Default Pink gradient is kept. Ambient mode auto‑extracts accent colors from your profile GIF (idle_animation.gif) and applies them to gradients; toggled via the header button or Command‑K.
+- Mood Themes (Cmd+K): Pink (default), Ambient (auto), Focus (high‑contrast), Noir (mono), Retro Pixel (playful). Themes persist.
+- Splash Avatar: The circular GIF appears in the splash, then animates to the hero name slot after dismiss (FLIP). Respects reduced‑motion.
+- Storytelling Case Study: A desktop timeline (Problem → Approach → Impact) with a synced visual panel under Home.
+- Logout Overlay: Full‑screen GIF displayed during logout; delay is configurable. On logout, the intake form resets and the welcome card is removed.
+- Centered Loading Overlay: Small, centered loading GIF with matching background color. Default color is #ffbd68 and can be overridden via the CSS variable --loading-bg on #login-loading.
+
+Command Palette (highlights)
+----------------------------
+- Open: Cmd/Ctrl+K
+- Categories: Tabs (Home/Coding/Creative/About/Contact), Projects (cards), Quick Actions (Explore Work, My Info, Contact, Download Resume), Social links, Settings (Toggle Sound/Haptics), Themes (Pink/Ambient/Focus/Noir/Retro), Install App (when available)
+- Keys: ↑/↓ navigate • Enter run • Esc close • Click items to run
+- Settings persistence: localStorage keys fx:sound (on/off), fx:haptics (on/off)
+
+PWA (Progressive Web App)
+-------------------------
+- What you get: Installable app window; offline support; faster reloads; custom theme color.
+- Install: Use browser Install menu or Command‑K → "Install App" (shows only when available).
+- Icons: Place 192×192 and 512×512 PNGs here:
+  - portfolio/icons/icon-192.png
+  - portfolio/icons/icon-512.png
+- Shortcuts (long‑press icon): Coding tab and About tab.
+- Offline: If a page isn’t cached, the app shows a friendly offline page.
+- Caching strategy:
+  - HTML: Network‑first; if offline, fallback to offline.html
+  - Assets (CSS/JS/images): Stale‑while‑revalidate (serve cache, update in background)
+- Background Sync (Intake): If an intake submit fails (offline/server down), it is queued locally (IndexedDB in the service worker, with a localStorage fallback) and retried later when online. A “Retry save” button also appears on the welcome card for manual sync.
+  - Support: Background Sync is available in Chromium‑based browsers. When not available, auto‑flush still occurs on page load or when the browser goes online.
+- Updates: New service worker auto‑installs; reload to activate. Cache version: portfolio‑v2
+- Clear/Reset: In browser devtools → Application → Service Workers → Unregister; clear site data; reload.
+
+Achievements & Badges (Trophy Case)
+-----------------------------------
+- Where: Home tab → "Trophy Case" card.
+- Badges:
+  - First Visit — awarded after successful intake.
+  - 8‑bit Mode — awarded when you trigger the Konami easter egg.
+  - Installed App — awarded after installing the PWA.
+  - Resume Analyzed — reserved for Resume Analyzer success (to be wired on the analyzer page).
+- Storage: Badges are saved per name in localStorage under ach:<lowercased full name>.
+- Sync: "Sync" merges your local badges with the server using a privacy‑friendly hashed key (no raw names stored in the server file).
+- Reset: "Reset" clears local badges for the current name only.
+
+Easter Egg — 8‑bit Mode (Konami)
+---------------------------------
+- Trigger: ↑ ↑ ↓ ↓ ← → ← → B A
+- Effect: Pixel font + CRT scanline overlay and confetti burst. Auto‑fades after ~8s.
+- Disable early: Press Esc or click the overlay.
+- Notes: In Safe Mode, confetti is disabled and overlay intensity is reduced.
+
+Developer Mode Overlays
+-----------------------
+- Toggle: Shift + D
+- Effect: Grid overlay + FPS badge (for layout and performance diagnostics).
+
+Accessibility
+-------------
+- Reduced motion: Disables tilt, minimizes animations.
+- Keyboard: Palette and splash are keyboard accessible; tabs are buttons.
+- High contrast path via Focus theme (Cmd+K → Theme: Focus).
+- Safe Mode: Header toggle reduces effects globally (disables confetti, blur, heavy motion).
+
+Backend — Resume Analyzer, Intake CSV, Achievements
+--------------------------------------------------
+- Location: Backend/resume-backend (Node/Express)
+- Configure: Set HF_API_TOKEN in backend/.env
+- Start: npm start (from the backend folder). Default port: 3001
+- Health checks: GET / and GET /health
+- Intake logging:
+  - POST /intake appends to data/intake.csv (header auto‑creates)
+  - GET /intake.csv downloads the CSV
+  - CORS enabled for local development
+  - Frontend will try port 3001, then 3002
+- Achievements API (privacy‑friendly):
+  - GET /achievements?first=<first>&last=<last> (or key=<shortHash>) → { key, badges }
+  - POST /achievements/award with JSON { first, last, badge } (or key + badge) → { ok, key, badge, ts }
+  - Storage file: data/achievements.json keyed by a short hash of the normalized name (no raw names stored).
+
+Deep Links / Routing
+--------------------
+- Open specific tabs via hash: #home, #coding, #creative, #about, #contact
+- On load and hash changes, the app activates the matching tab.
+- Replay splash this session: #intro
+
+Troubleshooting
+---------------
+- No sound: Most browsers require a user gesture first; also check Settings → Toggle Sound in Command‑K.
+- No haptics: Only devices/browsers supporting vibration will vibrate.
+- "Install App" missing: Only appears when install is available (Chromium browsers; served over localhost/HTTPS).
+- Offline not working: Ensure service worker is installed (check Application tab). Reload after first visit.
+- Sidebar not visible on mobile: Hidden under 820px viewport width by design.
+- Tilt feels heavy: System setting “Reduce Motion” will disable it.
+- Splash avatar missing: Ensure portfolio/idle_animation.gif exists. The splash preloads it; reload once. If still missing, clear cache and retry.
+- Logout delay too long/short: Edit index.html → #logout-overlay data-delay (milliseconds). Example: data-delay="1000".
+- Intake.csv not updating:
+  - Make sure the backend is running: from Backend/resume-backend, run npm start
+  - Test POST: curl -X POST http://localhost:3001/intake -H 'Content-Type: application/json' -d '{"first":"A","last":"B","age":20,"type":"student","school":"NCF","company":""}'
+  - Verify file: Backend/resume-backend/data/intake.csv
+  - If offline, the UI will show “Saved locally” with a Retry save button; it will auto‑sync when back online.
+
+Project Structure (key files)
+-----------------------------
+- portfolio/index.html     — Main UI
+- portfolio/style.css      — Design system, components, animations
+- portfolio/script.js      — Logic: login, splash, tabs, palette, tilt, PWA hooks, Easter egg
+- portfolio/manifest.json  — App metadata, icons, shortcuts, scope
+- portfolio/sw.js          — Service worker: caching and offline behavior
+- portfolio/offline.html   — Offline fallback page
+- portfolio/icons/         — Place icon-192.png & icon-512.png here
+- portfolio/resume.pdf     — Optional resume file for the Download Resume button
+- Backend/resume-backend/data/intake.csv — Generated CSV with intake submissions
+
+Storage Keys
+------------
+- localStorage:
+  - portfolioLoggedIn = 'true' when logged in
+  - fx:sound = 'on' | 'off'
+  - fx:haptics = 'on' | 'off'
+  - theme:mode = 'pink' | 'ambient' | 'focus' | 'noir' | 'retro'
+  - intakeQueue = JSON array of unsent intakes (fallback when SW sync not available)
+  - lastIntake = last submitted payload (for manual retry UI)
+  - profile:currentName = full name string used for per‑name features (trophy case)
+  - profiles:names = JSON array of previously seen names on this device
+  - ach:<lowercased full name> = JSON object of badges { badgeId: ISO timestamp }
+- sessionStorage:
+  - splashSeen = 'true' to skip intro for current session
+
+Release Notes (current)
+-----------------------
+- New: Achievements & Trophy Case (local per‑name with optional backend sync)
+- New: 8‑bit Mode Easter Egg (Konami) with CRT overlay + confetti (enable‑only, auto‑fade)
+- Change: Developer Mode now toggles with Shift + D (Grid + FPS)
+- Polish: Centered loading GIF with matching background color (#ffbd68)
+- Fix: Confetti visibility/z‑index and animation reliability; respects Safe Mode
+- Added 3D tilt interactions on cards
+- PWA: manifest, service worker, install flow, shortcuts, offline fallback, smarter caching
+- Konami Easter egg: dev grid and FPS meter
+- Command‑K: Sound/Haptics toggles and Install App action
+- Glass hero, spotlight effects, sliding sidebar, micro‑interactions
+- Theme toggle (Pink/Ambient) and ambient auto‑accent from avatar GIF
+- Mood themes in Command‑K (Pink/Ambient/Focus/Noir/Retro)
+- Splash avatar reliability + FLIP to hero avatar slot
+- Storytelling case study section under Home
+- Download Resume now triggers only resume.pdf
+- Configurable logout overlay delay via #logout-overlay[data-delay]
+- Replaced login with Quick Intake (student/employee conditional fields) and inline welcome card
+- Backend: POST /intake appends to data/intake.csv; GET /intake.csv to download
+- Frontend: robust POST with 3001→3002 fallback and summary status (“Saved to server”/“Saved locally”) + Retry save
+- Offline intake queue + Background Sync via service worker (auto and manual retry)
+- Logout now clears intake fields and removes the inline welcome card
+
+Tips
+----
+- Refresh once after changes to let the service worker update the cache.
+- Keep icons mask‑friendly (safe padding, square).
+- Use Command‑K to discover everything quickly.
+
+Upcoming / Extras
+-----------------
+- Shareable Postcard: One‑click “Generate Postcard” renders your avatar + gradient + name into a canvas image for download/share. If triggered from a demo page, it auto‑includes that demo’s title. Intended entry points: a header button and Command‑K action.
+- Pixel Pet (Tiny Tamagotchi): A mini pet sits on the side rail, reacts to hover/click, and levels up as more pages are explored. Designed to be cute and memorable. Progress is stored locally per visitor.

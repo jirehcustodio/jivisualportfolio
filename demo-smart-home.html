@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Home Automation Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .demo-header { font-size: 2rem; font-weight: 700; margin-bottom: 1.2rem; }
+    .demo-section { background: rgba(255,255,255,0.18); border-radius: 18px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 24px rgba(127,90,240,0.09); }
+    .demo-dashboard { display: flex; gap: 2rem; justify-content: center; margin-top: 2rem; }
+    .demo-widget { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(127,90,240,0.07); padding: 1.2rem 2rem; text-align: center; min-width: 160px; }
+    .demo-widget h4 { margin: 0.5rem 0; font-size: 1.1rem; }
+    .demo-btn { margin-top: 2rem; padding: 0.7rem 1.5rem; border-radius: 8px; background: linear-gradient(90deg, #7f5af0 0%, #2cb67d 100%); color: #fff; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: background 0.2s; }
+    .demo-btn:hover { background: linear-gradient(90deg, #ef4565 0%, #7f5af0 100%); }
+  </style>
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo"><span class="logo-svg" aria-label="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" stroke="#232526" stroke-width="2" fill="#fff"/>
+        <path d="M10 20 Q16 10 22 20" stroke="#414345" stroke-width="2" fill="none"/>
+        <circle cx="16" cy="16" r="3" fill="#232526"/>
+      </svg>
+    </span> Jireh's Safe Place</div>
+  </header>
+  <div class="container">
+    <div class="demo-section">
+      <div class="demo-header">Smart Home Automation Demo</div>
+      <p>Experience a simulated dashboard for a smart home system. Control devices, view energy usage, and see real-time status updates.</p>
+  <a href="index.html" class="demo-btn" style="margin-bottom:2rem;display:inline-block;">&#8592; Back to Home</a>
+  <div class="demo-dashboard">
+        <div class="demo-widget">
+          <h4>Living Room Lights</h4>
+          <button class="demo-btn" onclick="toggleDevice(this)" aria-pressed="false" aria-label="Toggle living room lights">Turn On</button>
+        </div>
+        <div class="demo-widget">
+          <h4>Thermostat</h4>
+          <span id="temp-value" aria-live="polite">22°C</span><br>
+          <button class="demo-btn" onclick="changeTemp(1)" aria-label="Increase temperature">+</button>
+          <button class="demo-btn" onclick="changeTemp(-1)" aria-label="Decrease temperature">-</button>
+        </div>
+        <div class="demo-widget">
+          <h4>Energy Usage</h4>
+          <span id="energy-value">5.2 kWh</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="main-footer">
+    <div class="footer-content">
+      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z &mdash; 2025</span>
+      <span class="footer-social">
+        <a href="https://instagram.com/yourhandle" target="_blank">Instagram</a> &bull; 
+        <a href="mailto:your@email.com">Email</a>
+      </span>
+    </div>
+  </footer>
+  <script>
+    function toggleDevice(btn) {
+      if (btn.textContent === 'Turn On') {
+        btn.textContent = 'Turn Off';
+        btn.style.background = 'linear-gradient(90deg, #ef4565 0%, #7f5af0 100%)';
+  btn.setAttribute('aria-pressed', 'true');
+      } else {
+        btn.textContent = 'Turn On';
+        btn.style.background = 'linear-gradient(90deg, #7f5af0 0%, #2cb67d 100%)';
+  btn.setAttribute('aria-pressed', 'false');
+      }
+    }
+    function changeTemp(delta) {
+      var temp = document.getElementById('temp-value');
+      var value = parseInt(temp.textContent);
+      value += delta;
+      temp.textContent = value + '°C';
+    }
+    // Keyboard shortcuts: +/- to modify thermostat
+    window.addEventListener('keydown', function(e) {
+      if (e.key === '+' || e.key === '=') { changeTemp(1); }
+      if (e.key === '-' || e.key === '_') { changeTemp(-1); }
+    });
+  </script>
+</body>
+</html>
+  

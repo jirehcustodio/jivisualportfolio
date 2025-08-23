@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Study Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .demo-header { font-size: 2rem; font-weight: 700; margin-bottom: 1.2rem; }
+  .demo-section { position: relative; z-index: 1; background: rgba(255,255,255,0.18); border-radius: 18px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 24px rgba(127,90,240,0.09); overflow: visible; }
+    /* Override pixel font for readability on this page */
+    .asp-page, .asp-page * { font-family: 'Sora', 'Space Grotesk', 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+  .asp-page.container { max-width: 960px; margin-inline: auto; padding-inline: 1rem; }
+    .planner-wrap {
+      position: relative;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 16px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+      padding: 1rem;
+      max-height: 70vh; /* scroll inside this box */
+      overflow: auto; /* clip inner shadows and enable scrolling */
+      -webkit-overflow-scrolling: touch;
+      contain: layout paint; /* isolate for safety */
+    }
+  .planner-grid { display:grid; grid-template-columns: 1fr; gap: 1rem; align-items: start; padding: 0.25rem; }
+  .demo-card { position: relative; z-index: 0; background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(127,90,240,0.08); padding:1rem; }
+  .planner-wrap .demo-card:focus-within { z-index: 1; box-shadow: 0 6px 22px rgba(127,90,240,0.12); }
+  .inputs-card { z-index: 2; }
+  .progress-card .mini > div { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+  .progress-card .mini > div .stat { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .progress-card .mini { line-height: 1.4; }
+  /* Subject color chips */
+  .subject-color { display:inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; border: 1px solid rgba(0,0,0,0.12); flex: 0 0 auto; }
+  .subject-chip { display:inline-flex; align-items:center; gap:6px; padding: 2px 8px; border-radius: 999px; background: #f7f7f7; border: 1px solid #eee; }
+  /* Calendar styles */
+  .calendar-controls { display:flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .calendar-controls label { font-weight: 700; font-size: 0.9rem; }
+  .calendar-controls input[type="time"], .calendar-controls select { padding: 0.35rem 0.5rem; border:1px solid #e0e0e0; border-radius:8px; font: inherit; }
+  .calendar-wrap { margin-top: 0.6rem; border: 1px solid #eee; border-radius: 10px; overflow: auto; background: #fff; }
+  .calendar-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; min-width: 640px; }
+  .calendar-table thead th { position: sticky; top: 0; background: #fafafa; z-index: 1; text-align: center; padding: 0.4rem; border-bottom: 1px solid #eee; }
+  .calendar-table th, .calendar-table td { border-bottom:1px dashed #f0f0f0; border-right: 1px solid #f8f8f8; }
+  .calendar-table th:first-child, .calendar-table td:first-child { width: 64px; text-align: right; padding-right: 6px; color: #666; font-size: 0.82rem; font-weight: 700; border-right: 1px solid #eee; }
+  .calendar-table tr:last-child td { border-bottom: none; }
+  .cal-block { display: grid; gap: 2px; align-content: center; justify-items: center; padding: 4px 6px; border-radius: 8px; color: #111; font-weight: 700; font-size: 0.85rem; margin: 2px; }
+  .cal-block .mini { font-size: 0.78rem; color: #222; }
+  .calendar-empty { color:#777; font-size: 0.85rem; text-align: center; padding: 0.5rem; }
+    .demo-btn { padding: 0.7rem 1.4rem; border-radius: 10px; background: linear-gradient(90deg, #7f5af0, #2cb67d); color:#fff; font-weight:700; border:none; cursor:pointer; }
+    .demo-btn.secondary { background:#232526; }
+    .form { display:grid; gap:0.6rem; }
+    .form input, .form select, .form textarea { font:inherit; padding:0.6rem 0.9rem; border:1px solid #e0e0e0; border-radius:10px; background:#fff; }
+  .subtle-hint { font-size: 0.85rem; color:#555; }
+  .subject-builder { display:grid; grid-template-columns: 1.2fr 0.6fr 1fr auto; gap: 0.5rem; align-items: end; }
+  .subject-builder .field { display:grid; gap:0.25rem; }
+  .subject-list-table { width:100%; border-collapse: collapse; margin-top: 0.5rem; }
+  .subject-list-table th, .subject-list-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee; text-align: left; }
+  .subject-actions { text-align: right; }
+  .status { margin-top: 0.4rem; font-weight: 700; }
+  .status-ok { color: #2cb67d; }
+  .status-warn { color: #ef4565; }
+  /* Availability grid labels */
+  .availability-grid { display:grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+  .availability-grid .day-cell { display:grid; gap:0.25rem; justify-items: center; align-items: center; }
+  .availability-grid .day-label { font-size: 0.78rem; font-weight: 700; color:#555; }
+  .availability-grid input[type="number"] { width: 100%; text-align: center; }
+    .schedule-table { width:100%; border-collapse:separate; border-spacing:0; table-layout: fixed; }
+    .schedule-table th, .schedule-table td { border-bottom:1px solid #eee; padding:0.45rem 0.5rem; vertical-align: top; }
+    .schedule-table th:first-child, .schedule-table td:first-child { width: 90px; }
+    .session-row { display:grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.5rem; margin: 0.25rem 0; }
+    .session-row span { min-width: 0; overflow-wrap: anywhere; }
+    .session-row .mini { white-space: nowrap; }
+    .mini { color:#555; font-size:0.94rem; }
+    .stat { font-weight:800; }
+  /* Chart sizing: use a wrapper to avoid canvas stretching */
+  .chart-area { position: relative; width: 100%; height: 260px; }
+  #chart { display:block; width:100%; height:100%; }
+  @media (max-width: 480px) { .chart-area { height: 220px; } }
+    /* Buttons wrap nicely */
+    .btn-row { display:flex; gap:0.5rem; flex-wrap: wrap; }
+    @media (max-width: 560px) {
+      .demo-header { font-size: 1.6rem; }
+      .planner-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/duration.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/weekday.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/isoWeek.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.dayjs) {
+        try { dayjs.extend(window.dayjs_plugin_duration); dayjs.extend(window.dayjs_plugin_weekday); dayjs.extend(window.dayjs_plugin_isoWeek); } catch {}
+      }
+    });
+  </script>
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo">
+      <img src="ai-study-planner-logo.svg" alt="AI Study Planner" style="width:32px;height:32px;"/>
+      <span class="logo-animated-text">Jireh's Safe Place</span>
+    </div>
+  </header>
+  <div class="container asp-page">
+    <div class="demo-section">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;">
+        <img src="ai-study-planner-logo.svg" alt="AI Study Planner" style="width:32px;height:32px;"/>
+        <strong>AI Study Planner</strong>
+      </div>
+      <div class="demo-header">Plan smarter study sessions with AI heuristics</div>
+      <p class="mini">Enter your subjects, deadlines, and available hours. The planner generates a balanced weekly schedule, prioritizes upcoming exams, and adapts as you mark sessions done.</p>
+      <a href="index.html" class="demo-btn" style="margin-bottom:1rem;display:inline-block;">&#8592; Back to Home</a>
+
+      <div class="demo-card planner-wrap">
+        <div class="planner-grid">
+  <div class="demo-card inputs-card">
+          <strong>Inputs</strong>
+          <div class="form">
+            <label>Subjects</label>
+            <div class="subtle-hint">Add using the fields below, or paste lines in the box (format: Subject | hours | deadline YYYY-MM-DD). Deadline is optional.</div>
+            <div class="subject-builder">
+              <div class="field">
+                <label for="sb-name" class="mini">Name</label>
+                <input id="sb-name" type="text" placeholder="Math" />
+              </div>
+              <div class="field">
+                <label for="sb-hours" class="mini">Hours</label>
+                <input id="sb-hours" type="number" min="0" step="0.5" placeholder="8" />
+              </div>
+              <div class="field">
+                <label for="sb-deadline" class="mini">Deadline</label>
+                <input id="sb-deadline" type="date" />
+              </div>
+              <button id="btn-add-subject" type="button" class="demo-btn">Add</button>
+            </div>
+            <div id="subjects-list" class="mini"></div>
+            <label class="mini" for="subjects">Advanced: paste/edit as lines (Subject | hours | deadline)</label>
+            <textarea id="subjects" rows="8" placeholder="Math | 8 | 2025-09-05
+Physics | 5 | 2025-09-03
+Programming | 10 | 2025-09-20"></textarea>
+            <label>Weekly availability (hours/day)</label>
+            <div class="btn-row" style="margin: 0.1rem 0 0.3rem;">
+              <button id="preset-light" class="demo-btn secondary" type="button">Preset: Light</button>
+              <button id="preset-balanced" class="demo-btn secondary" type="button">Preset: Balanced</button>
+              <button id="preset-intensive" class="demo-btn secondary" type="button">Preset: Intensive</button>
+            </div>
+            <div class="availability-grid">
+              <div class="day-cell"><label class="day-label" for="h0">Mon</label><input type="number" id="h0" min="0" step="0.5" value="2" aria-label="Mon hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h1">Tue</label><input type="number" id="h1" min="0" step="0.5" value="2" aria-label="Tue hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h2">Wed</label><input type="number" id="h2" min="0" step="0.5" value="2" aria-label="Wed hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h3">Thu</label><input type="number" id="h3" min="0" step="0.5" value="2" aria-label="Thu hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h4">Fri</label><input type="number" id="h4" min="0" step="0.5" value="2" aria-label="Fri hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h5">Sat</label><input type="number" id="h5" min="0" step="0.5" value="3" aria-label="Sat hours"/></div>
+              <div class="day-cell"><label class="day-label" for="h6">Sun</label><input type="number" id="h6" min="0" step="0.5" value="3" aria-label="Sun hours"/></div>
+            </div>
+            <div class="btn-row" style="margin-top:0.6rem;">
+              <button id="btn-generate" class="demo-btn" type="button">Generate Plan</button>
+              <button id="btn-clear" class="demo-btn secondary" type="button">Clear</button>
+              <button id="btn-export" class="demo-btn secondary" type="button">Export CSV</button>
+              <label class="demo-btn" style="cursor:pointer;">
+                Import CSV<input id="import-file" type="file" accept="text/csv" style="display:none;"/>
+              </label>
+              <button id="btn-sample" class="demo-btn secondary" type="button">Use Sample</button>
+            </div>
+            <div id="status" class="mini status" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="demo-card">
+          <strong>Weekly Schedule</strong>
+          <div id="schedule" class="mini" style="margin-top:0.6rem;overflow:auto;"></div>
+        </div>
+        <div class="demo-card">
+          <strong>Calendar (beta)</strong>
+          <div class="mini" style="margin: 0.3rem 0 0.6rem;">Visual weekly calendar so you don’t forget subject times.</div>
+          <div class="calendar-controls mini" style="margin-bottom: 0.4rem;">
+            <label for="cal-start">Start time</label>
+            <input type="time" id="cal-start" value="17:00" />
+            <label for="cal-slot">Slot</label>
+            <select id="cal-slot">
+              <option value="60" selected>60m</option>
+              <option value="30">30m</option>
+              <option value="90">90m</option>
+            </select>
+            <label for="cal-day-start">Day</label>
+            <input type="time" id="cal-day-start" value="08:00" />
+            <span>to</span>
+            <input type="time" id="cal-day-end" value="20:00" />
+            <button id="btn-ics" type="button" class="demo-btn secondary" style="margin-left:auto;">Export .ics</button>
+          </div>
+          <div id="calendar" class="calendar-wrap"></div>
+        </div>
+        <div class="demo-card progress-card">
+          <strong>Progress</strong>
+          <div class="mini" style="margin-top:0.6rem;">
+            <div>Planned hours: <span id="planned" class="stat">0</span></div>
+            <div>Completed: <span id="done" class="stat">0</span></div>
+            <div>Remaining: <span id="remain" class="stat">0</span></div>
+          </div>
+          <div class="chart-area" style="margin-top:0.6rem;">
+            <canvas id="chart"></canvas>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="main-footer">
+    <div class="footer-content">
+      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z — 2025</span>
+    </div>
+  </footer>
+
+  <script>
+    const key = 'asp:plan';
+    let plan = { sessions: [], done: {} };
+
+    function parseSubjects(raw) {
+      const rows = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const out = [];
+      for (const r of rows) {
+        const [name, hours, deadline] = r.split('|').map(s=>s.trim());
+        if (!name) continue;
+        const h = Math.max(0, parseFloat(hours||'0')||0);
+        const d = deadline && /\d{4}-\d{2}-\d{2}/.test(deadline) ? deadline : null;
+        out.push({ name, hours:h, deadline:d });
+      }
+      return out;
+    }
+
+    function generateSessions(subjects, avail) {
+      // Prioritize by urgency (sooner deadline) and remaining hours
+      const today = new Date();
+      const order = subjects.map(s=>{
+        const daysLeft = s.deadline ? Math.max(0, Math.ceil((new Date(s.deadline).getTime()-today.getTime())/86400000)) : 9999;
+        return { ...s, daysLeft };
+      }).sort((a,b)=> a.daysLeft - b.daysLeft || b.hours - a.hours);
+
+      const sessions = [];
+      let remaining = order.map(o=>({ name:o.name, rem:o.hours }));
+      for (let i=0;i<7;i++) {
+        let hours = Math.max(0, parseFloat(avail[i]||0) || 0);
+        while (hours > 0.001) {
+          const idx = remaining.findIndex(r=>r.rem>0.001);
+          if (idx === -1) break;
+          const slice = Math.min(1, hours, remaining[idx].rem);
+          sessions.push({ day:i, subject:remaining[idx].name, hours:slice });
+          remaining[idx].rem = Math.max(0, remaining[idx].rem - slice);
+          hours -= slice;
+          remaining.push(remaining.splice(idx,1)[0]);
+        }
+      }
+      return sessions;
+    }
+
+    function renderSchedule() {
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const byDay = Array.from({length:7},()=>[]);
+      plan.sessions.forEach(s=>{ byDay[s.day].push(s); });
+      const rows = byDay.map((list, i)=>{
+        if (!list.length) return `<tr><td><strong>${days[i]}</strong></td><td class="mini">No sessions</td></tr>`;
+        const cells = list.map((s,j)=>`<div class="session-row">
+          <input type="checkbox" data-day="${i}" data-idx="${j}" ${plan.done[`${i}-${j}`]? 'checked':''} />
+          <span class="subject-chip"><span class="subject-color" style="background:${colorFor(s.subject)}"></span>${s.subject}</span>
+          <span class=\"mini\" style=\"opacity:0.7\">(${s.hours}h)</span>
+        </div>`).join('');
+        return `<tr><td><strong>${days[i]}</strong></td><td>${cells}</td></tr>`;
+      }).join('');
+      document.getElementById('schedule').innerHTML = `
+        <table class="schedule-table">
+          <thead><tr><th style="width:90px;">Day</th><th>Sessions</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    document.querySelectorAll('#schedule input[type="checkbox"]').forEach(cb=>{
+        cb.addEventListener('change', ()=>{
+      const k = `${cb.getAttribute('data-day')}-${cb.getAttribute('data-idx')}`;
+      plan.done[k] = cb.checked;
+          save();
+          renderProgress();
+        });
+      });
+    }
+
+    function renderProgress() {
+      const planned = plan.sessions.reduce((a,b)=>a+b.hours,0);
+      let done = 0;
+      const byDayIndex = Array.from({length:7},()=>0);
+      plan.sessions.forEach(s=>{
+        const idxInDay = byDayIndex[s.day]++;
+        if (plan.done[`${s.day}-${idxInDay}`]) done += s.hours;
+      });
+      document.getElementById('planned').textContent = planned.toFixed(1);
+      document.getElementById('done').textContent = done.toFixed(1);
+      document.getElementById('remain').textContent = Math.max(0, planned-done).toFixed(1);
+      updateChart(plan.sessions, plan.done);
+    }
+
+    let chart;
+    // Color helper: deterministic palette by subject name
+    function colorFor(name) {
+      const palette = ['#7f5af0', '#2cb67d', '#ef4565', '#3a86ff', '#ffbe0b', '#8338ec', '#fb5607', '#8ecae6', '#219ebc', '#06d6a0'];
+      let h = 0; for (let i=0;i<name.length;i++) { h = (h * 31 + name.charCodeAt(i)) >>> 0; }
+      return palette[h % palette.length];
+    }
+    function updateChart(sessions, doneMap) {
+      // Gracefully skip if Chart.js isn't available
+      if (typeof Chart === 'undefined') return;
+      const buckets = {};
+      const byDayIndex = Array.from({length:7},()=>0);
+      sessions.forEach(s=>{
+        const k = s.subject;
+        buckets[k] = buckets[k] || { planned:0, done:0 };
+        buckets[k].planned += s.hours;
+        const idxInDay = byDayIndex[s.day]++;
+        if (doneMap[`${s.day}-${idxInDay}`]) buckets[k].done += s.hours;
+      });
+      const labels = Object.keys(buckets);
+      const planned = labels.map(l=>buckets[l].planned);
+      const done = labels.map(l=>buckets[l].done);
+      const ctx = document.getElementById('chart');
+      if (!ctx) return;
+      if (chart) try { chart.destroy(); } catch {}
+      const colors = labels.map(l=>colorFor(l));
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [
+          { label:'Planned', data: planned, backgroundColor: colors, barPercentage: 0.6, categoryPercentage: 0.7 },
+          { label:'Done', data: done, backgroundColor: colors.map(c=>c + 'CC'), barPercentage: 0.6, categoryPercentage: 0.7 }
+        ]},
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins:{
+            legend:{
+              position:'bottom',
+              labels: { usePointStyle: true, boxWidth: 10, boxHeight: 10, padding: 10 }
+            }
+          },
+          elements: { bar: { borderRadius: 6, maxBarThickness: 42, borderSkipped: false } },
+          scales:{ x:{ stacked:false }, y:{ beginAtZero:true } }
+        }
+      });
+    }
+
+    // Calendar helpers and render
+    function parseTimeStr(str) { const [h,m] = (str||'0:0').split(':').map(n=>parseInt(n,10)||0); return h*60+m; }
+    function minsToLabel(m) { const hh = Math.floor(m/60).toString().padStart(2,'0'); const mm = (m%60).toString().padStart(2,'0'); return `${hh}:${mm}`; }
+    function computeBlocks() {
+      const startDefault = parseTimeStr(document.getElementById('cal-start').value || '17:00');
+      const gap = 5; // minutes between sessions
+      const daySessions = Array.from({length:7},()=>[]);
+      plan.sessions.forEach(s=>{ daySessions[s.day].push(s); });
+      const byDay = Array.from({length:7},()=>[]);
+      for (let d=0; d<7; d++) {
+        let t = startDefault;
+        for (const s of daySessions[d]) {
+          const dur = Math.max(30, Math.round((s.hours||1)*60));
+          byDay[d].push({ subject: s.subject, start: t, end: t+dur });
+          t += dur + gap;
+        }
+      }
+      return byDay;
+    }
+    function renderCalendar() {
+      const wrap = document.getElementById('calendar'); if (!wrap) return;
+      const dayStart = parseTimeStr(document.getElementById('cal-day-start').value || '08:00');
+      const dayEnd = parseTimeStr(document.getElementById('cal-day-end').value || '20:00');
+      const slot = Math.max(15, parseInt(document.getElementById('cal-slot').value||'60',10));
+      if (dayEnd <= dayStart) { wrap.innerHTML = '<div class="calendar-empty">Day end must be after start.</div>'; return; }
+      const slots = [];
+      for (let t=dayStart; t<=dayEnd; t+=slot) slots.push(t);
+      const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const byDay = computeBlocks();
+      const n = slots.length;
+      const maps = byDay.map(list=>{
+        const arr = new Array(n).fill(null);
+        list.forEach(b=>{
+          const clampedStart = Math.max(dayStart, b.start); const clampedEnd = Math.min(dayEnd, b.end);
+          if (clampedEnd <= clampedStart) return;
+          const i0 = Math.floor((clampedStart - dayStart)/slot);
+          const span = Math.max(1, Math.ceil((clampedEnd - clampedStart)/slot));
+          if (i0 >= 0 && i0 < n) {
+            arr[i0] = { type:'block', span, subject: b.subject };
+            for (let k=1;k<span && i0+k<n;k++) arr[i0+k] = { type:'skip' };
+          }
+        });
+        return arr;
+      });
+      let thead = `<thead><tr><th>Time</th>${days.map(d=>`<th>${d}</th>`).join('')}</tr></thead>`;
+      let tbody = '<tbody>';
+      for (let r=0;r<n;r++) {
+        tbody += `<tr><td>${minsToLabel(slots[r])}</td>`;
+        for (let d=0; d<7; d++) {
+          const cell = maps[d][r];
+          if (!cell) { tbody += '<td></td>'; }
+          else if (cell.type === 'skip') { /* covered by rowspan */ }
+          else if (cell.type === 'block') {
+            const subj = cell.subject; const color = colorFor(subj);
+            tbody += `<td rowspan="${cell.span}"><div class="cal-block" style="background:${color}1A;border:1px solid ${color}55;">
+              <div class="subject-chip"><span class="subject-color" style="background:${color}"></span>${subj}</div>
+            </div></td>`;
+          }
+        }
+        tbody += '</tr>';
+      }
+      tbody += '</tbody>';
+      if (!plan.sessions.length) {
+        wrap.innerHTML = '<div class="calendar-empty">No sessions yet — add subjects and click Generate Plan.</div>';
+      } else {
+        wrap.innerHTML = `<table class="calendar-table">${thead}${tbody}</table>`;
+      }
+    }
+    function exportICS() {
+      const byDay = computeBlocks();
+      if (!byDay.some(list=>list.length)) return;
+      const now = (window.dayjs? dayjs(): null);
+      const baseMon = now? now.isoWeekday(1) : null; // Monday of this week
+      function fmt(dt){ return dt.format('YYYYMMDD[T]HHmmss'); }
+      let ics = 'BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//AI Study Planner//EN\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n';
+      for (let d=0; d<7; d++) {
+        for (const b of byDay[d]) {
+          if (!baseMon) continue;
+          const date = baseMon.add(d, 'day');
+          const start = date.startOf('day').add(b.start, 'minute');
+          const end = date.startOf('day').add(b.end, 'minute');
+          const uid = Math.random().toString(36).slice(2) + '@ai-study-planner';
+          ics += 'BEGIN:VEVENT\n';
+          ics += `UID:${uid}\n`;
+          ics += `DTSTAMP:${fmt(now)}\n`;
+          ics += `DTSTART:${fmt(start)}\n`;
+          ics += `DTEND:${fmt(end)}\n`;
+          ics += `SUMMARY:${b.subject}\n`;
+          ics += `DESCRIPTION:AI Study Planner session for ${b.subject}\n`;
+          ics += 'END:VEVENT\n';
+        }
+      }
+      ics += 'END:VCALENDAR';
+      const blob = new Blob([ics], {type:'text/calendar'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'ai-study-planner.ics'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+
+    function save() { try { localStorage.setItem(key, JSON.stringify(plan)); } catch {} }
+    function load() { try { const v = JSON.parse(localStorage.getItem(key)||'null'); if (v) plan = v; } catch {} }
+
+    function exportCSV() {
+      const rows = [['day','subject','hours','done']];
+      const byDayIndex = Array.from({length:7},()=>0);
+      plan.sessions.forEach((s)=>{
+        const idxInDay = byDayIndex[s.day]++;
+        rows.push([s.day, s.subject, s.hours, !!plan.done[`${s.day}-${idxInDay}`]]);
+      });
+      const csv = rows.map(r=>r.join(',')).join('\n');
+      const blob = new Blob([csv], { type:'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'ai-study-planner.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    async function importCSV(file) {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (!lines.length) return;
+      lines.shift();
+      const sessions = [];
+      const done = {};
+      const byDayIndex = Array.from({length:7},()=>0);
+      for (const ln of lines) {
+        const [day, subject, hours, doneStr] = ln.split(',');
+        const d = parseInt(day,10);
+        const h = parseFloat(hours||'0')||0;
+        const idxInDay = byDayIndex[d]++;
+        sessions.push({ day:d, subject, hours:h });
+        if (doneStr === 'true') done[`${d}-${idxInDay}`] = true;
+      }
+      plan = { sessions, done };
+      save();
+      renderSchedule();
+      renderProgress();
+    }
+
+    document.getElementById('btn-generate').addEventListener('click', () => {
+      const subjEl = document.getElementById('subjects');
+      const subjectsRaw = (subjEl.value && subjEl.value.trim().length) ? subjEl.value : (subjEl.placeholder || '');
+      const subjects = parseSubjects(subjectsRaw);
+      const avail = [0,1,2,3,4,5,6].map(i=>parseFloat(document.getElementById('h'+i).value||'0')||0);
+      const totalAvail = avail.reduce((a,b)=>a+b,0);
+      const status = document.getElementById('status');
+      status.textContent = '';
+      status.className = 'mini status';
+      if (!subjects.length) {
+        status.textContent = 'Please enter at least one subject (use format: Name | hours | deadline).';
+        status.classList.add('status-warn');
+        return;
+      }
+      if (totalAvail <= 0) {
+        status.textContent = 'Weekly availability is 0 hours. Increase at least one day to generate a plan.';
+        status.classList.add('status-warn');
+        return;
+      }
+      const sessions = generateSessions(subjects, avail);
+      plan = { sessions, done: {} };
+      save();
+      renderSchedule();
+      renderProgress();
+      renderCalendar();
+      const plannedHours = sessions.reduce((a,b)=>a+b.hours,0).toFixed(1);
+      status.textContent = `Plan generated: ${sessions.length} sessions, ${plannedHours}h total.`;
+      status.classList.add('status-ok');
+    });
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      plan = { sessions: [], done: {} };
+      save();
+      renderSchedule();
+      renderProgress();
+      renderCalendar();
+    });
+    document.getElementById('btn-export').addEventListener('click', exportCSV);
+    document.getElementById('import-file').addEventListener('change', (e)=>{ const f = e.target.files[0]; if (f) importCSV(f); e.target.value=''; });
+    document.getElementById('btn-sample').addEventListener('click', ()=>{
+      const subjEl = document.getElementById('subjects');
+      subjEl.value = subjEl.placeholder || 'Math | 8 | 2025-09-05\nPhysics | 5 | 2025-09-03\nProgramming | 10 | 2025-09-20';
+      const status = document.getElementById('status');
+      status.textContent = 'Sample subjects loaded. You can edit them and click Generate Plan.';
+      status.className = 'mini status status-ok';
+      renderSubjectsList();
+    });
+    // Calendar listeners
+    document.addEventListener('change', (e)=>{
+      if (['cal-start','cal-slot','cal-day-start','cal-day-end'].includes(e.target.id)) renderCalendar();
+    });
+    document.addEventListener('click', (e)=>{
+      if (e.target && e.target.id === 'btn-ics') exportICS();
+    });
+
+    // Subject Builder helpers
+    function renderSubjectsList() {
+      const raw = document.getElementById('subjects').value || '';
+      const rows = parseSubjects(raw);
+      const wrap = document.getElementById('subjects-list');
+      if (!rows.length) { wrap.innerHTML = '<div class="subtle-hint">No subjects yet. Add with the fields above or paste lines in the box.</div>'; return; }
+  const html = `
+        <table class="subject-list-table mini">
+          <thead><tr><th>Subject</th><th>Hours</th><th>Deadline</th><th class="subject-actions"></th></tr></thead>
+          <tbody>
+    ${rows.map((r,i)=>`<tr>
+      <td><span class="subject-color" style="background:${colorFor(r.name)}"></span>${r.name}</td>
+              <td>${r.hours}</td>
+              <td>${r.deadline || '-'}</td>
+              <td class="subject-actions"><button class="demo-btn secondary" data-remove="${i}" type="button">Remove</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+      wrap.innerHTML = html;
+      wrap.querySelectorAll('[data-remove]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const idx = parseInt(btn.getAttribute('data-remove'),10);
+          const list = parseSubjects(document.getElementById('subjects').value || '');
+          list.splice(idx,1);
+          const lines = list.map(s=>`${s.name} | ${s.hours}${s.deadline ? ' | '+s.deadline : ''}`);
+          document.getElementById('subjects').value = lines.join('\n');
+          renderSubjectsList();
+        });
+      });
+    }
+
+    function addSubjectFromBuilder() {
+      const name = (document.getElementById('sb-name').value || '').trim();
+      const hours = parseFloat(document.getElementById('sb-hours').value || '0') || 0;
+      const deadline = (document.getElementById('sb-deadline').value || '').trim();
+      const status = document.getElementById('status');
+      status.textContent=''; status.className='mini status';
+      if (!name) { status.textContent='Enter a subject name.'; status.classList.add('status-warn'); return; }
+      if (hours <= 0) { status.textContent='Hours should be greater than 0.'; status.classList.add('status-warn'); return; }
+      const line = `${name} | ${hours}${deadline? ' | '+deadline : ''}`;
+      const ta = document.getElementById('subjects');
+      ta.value = (ta.value ? (ta.value.trim()+'\n') : '') + line;
+      document.getElementById('sb-name').value='';
+      document.getElementById('sb-hours').value='';
+      document.getElementById('sb-deadline').value='';
+      renderSubjectsList();
+      status.textContent='Subject added.'; status.classList.add('status-ok');
+    }
+
+    document.getElementById('btn-add-subject').addEventListener('click', addSubjectFromBuilder);
+    document.getElementById('subjects').addEventListener('input', ()=>{ renderSubjectsList(); });
+
+    // Availability presets
+    const presets = {
+      light: [1,1,1,1,1,2,2],
+      balanced: [2,2,2,2,2,3,3],
+      intensive: [3,3,3,3,3,4,4]
+    };
+    function applyPreset(arr) {
+      for (let i=0;i<7;i++) { const el = document.getElementById('h'+i); if (el) el.value = arr[i]; }
+      const status = document.getElementById('status');
+      status.textContent = 'Availability preset applied.'; status.className = 'mini status status-ok';
+    }
+    document.getElementById('preset-light').addEventListener('click', ()=>applyPreset(presets.light));
+    document.getElementById('preset-balanced').addEventListener('click', ()=>applyPreset(presets.balanced));
+    document.getElementById('preset-intensive').addEventListener('click', ()=>applyPreset(presets.intensive));
+
+  function parseDeepLink() {
+    try {
+      const q = new URLSearchParams(location.search);
+      const subjB64 = q.get('subjects');
+      const textParam = q.get('text');
+      const ta = document.getElementById('subjects');
+      if (subjB64) {
+        const json = atob(subjB64);
+        const arr = JSON.parse(json);
+        if (Array.isArray(arr)) {
+          const lines = arr.map(s => `${s.name} | ${s.hours}${s.deadline? ' | '+s.deadline : ''}`);
+          ta.value = lines.join('\n');
+        }
+      } else if (textParam) {
+        if (!ta.value) ta.value = textParam;
+      }
+    } catch {}
+  }
+  load();
+  parseDeepLink();
+  renderSubjectsList();
+  renderSchedule();
+  renderProgress();
+  renderCalendar();
+  </script>
+</body>
+</html>

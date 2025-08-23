@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+.Spotlight-V100
+.Trashes
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node (just in case)
+node_modules/
+
+# Env
+.env
+.env.*

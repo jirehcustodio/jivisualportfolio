@@ -1,0 +1,26 @@
+{
+  "name": "JiVisualPortfolio",
+  "short_name": "JiVisual",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7f5af0",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Open Coding", "short_name": "Coding", "url": "./index.html#coding", "icons": [{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"}] },
+    { "name": "Open About", "short_name": "About", "url": "./index.html#about", "icons": [{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png"}] }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

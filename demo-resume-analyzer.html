@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Analyzer Demo</title>
+  <meta name="description" content="Upload a PDF or DOCX and get instant feedback, role fit, sentiment, and keyword gap analysis." />
+  <meta property="og:title" content="AI Resume Analyzer Demo" />
+  <meta property="og:description" content="Instant resume feedback with role fit and keyword gap analysis." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="resume%20analyzer%20logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .demo-header { font-size: 2rem; font-weight: 700; margin-bottom: 1.2rem; }
+    .demo-section { background: rgba(255,255,255,0.18); border-radius: 18px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 24px rgba(127,90,240,0.09); }
+    .demo-form { display: flex; flex-direction: column; gap: 1.2rem; max-width: 400px; margin: 2rem auto; }
+    .demo-form textarea { width: 100%; min-height: 120px; border-radius: 8px; border: 1px solid #e0e0e0; padding: 1rem; font-size: 1rem; font-family: inherit; }
+    .demo-btn { margin-top: 1rem; padding: 0.7rem 1.5rem; border-radius: 8px; background: linear-gradient(90deg, #7f5af0 0%, #2cb67d 100%); color: #fff; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: background 0.2s; }
+    .demo-btn:hover { background: linear-gradient(90deg, #ef4565 0%, #7f5af0 100%); }
+    .demo-result { margin-top: 2rem; background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(127,90,240,0.07); padding: 1.2rem; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo">
+      <img src="resume%20analyzer%20logo.png" alt="Resume Analyzer" class="logo-img" />
+      <span class="logo-animated-text">Jireh's Safe Place</span>
+    </div>
+  </header>
+  <div class="container">
+    <div class="demo-section">
+  <img src="resume%20analyzer%20logo.png" alt="Resume Analyzer Logo" class="analyzer-logo" />
+      <div class="demo-header">AI Resume Analyzer Demo</div>
+      <p>Paste your resume below and get instant feedback and a simulated score based on skills and keywords.</p>
+  <a href="index.html" class="demo-btn" style="margin-bottom:2rem;display:inline-block;">&#8592; Back to Home</a>
+  <form class="demo-form" onsubmit="return analyzeResume();" aria-describedby="upload-help">
+  <label for="resume-file" style="font-weight:600;">Add Resume File (PDF or DOCX)</label>
+  <input type="file" id="resume-file" name="resume" accept=".pdf,.docx" style="margin-bottom:0.7rem;" onchange="showFileName()" aria-describedby="file-info upload-help">
+  <div id="upload-help" class="sr-only">Choose a PDF or DOCX. Legacy .doc is not supported.</div>
+  <div id="file-info" style="font-size:0.98rem;color:#7f5af0;margin-bottom:0.7rem;display:none;"></div>
+  <label for="target-role" style="font-weight:600;">Target role (optional)</label>
+  <select id="target-role" style="margin-bottom:0.7rem;">
+    <option value="">-- Select --</option>
+    <option value="frontend">Frontend</option>
+    <option value="backend">Backend</option>
+    <option value="data">Data</option>
+    <option value="devops">DevOps</option>
+    <option value="iot">IoT</option>
+  </select>
+  <label for="job-desc" style="font-weight:600;">Job description (optional)</label>
+  <textarea id="job-desc" placeholder="Paste the job description here for gap analysis…" aria-describedby="jd-help" style="min-height:100px"></textarea>
+  <div id="jd-help" class="sr-only">If provided, the analyzer will highlight present and missing keywords based on this description.</div>
+  <textarea id="resume-input" placeholder="Paste your resume here..."></textarea>
+  <button class="demo-btn" type="submit">Analyze</button>
+      </form>
+      <div id="demo-result" class="demo-result" style="display:none;" aria-live="polite" aria-atomic="true"></div>
+    </div>
+    <div class="demo-section" aria-labelledby="contact-title">
+      <div class="demo-header" id="contact-title">Contact</div>
+      <p>Have feedback or want to collaborate? Send a quick note.</p>
+      <form id="contact-form" class="demo-form" onsubmit="return submitContact();">
+        <label for="contact-name" style="font-weight:600;">Name</label>
+        <input id="contact-name" name="name" type="text" required placeholder="Your name" autocomplete="name" />
+        <label for="contact-email" style="font-weight:600;">Email</label>
+        <input id="contact-email" name="email" type="email" required placeholder="you@example.com" autocomplete="email" />
+        <label for="contact-message" style="font-weight:600;">Message</label>
+        <textarea id="contact-message" name="message" required placeholder="How can I help?" style="min-height:100px"></textarea>
+        <button class="demo-btn" type="submit">Send</button>
+        <div id="contact-status" role="status" aria-live="polite" style="margin-top:0.6rem;font-weight:600;"></div>
+      </form>
+    </div>
+  </div>
+  <footer class="main-footer">
+    <div class="footer-content">
+      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z &mdash; 2025</span>
+      <span class="footer-social">
+        <a href="https://instagram.com/yourhandle" target="_blank">Instagram</a> &bull; 
+        <a href="mailto:your@email.com">Email</a>
+      </span>
+    </div>
+  </footer>
+  <script>
+    function showFileName() {
+      var fileInput = document.getElementById('resume-file');
+      var fileInfo = document.getElementById('file-info');
+      if (fileInput.files.length > 0) {
+        fileInfo.textContent = 'Selected file: ' + fileInput.files[0].name;
+        fileInfo.style.display = 'block';
+      } else {
+        fileInfo.textContent = '';
+        fileInfo.style.display = 'none';
+      }
+    }
+    function analyzeResume() {
+      var fileInput = document.getElementById('resume-file');
+      var result = document.getElementById('demo-result');
+      if (fileInput.files.length === 0) {
+        result.style.display = 'block';
+        result.textContent = 'Please add a file.';
+        return false;
+      }
+      var file = fileInput.files[0];
+      var name = (file && file.name) ? file.name.toLowerCase() : '';
+      if (name.endsWith('.doc')) {
+        result.style.display = 'block';
+        result.textContent = 'Legacy .doc files are not supported. Please convert to DOCX or PDF and try again.';
+        return false;
+      }
+      if (!name.endsWith('.pdf') && !name.endsWith('.docx')) {
+        result.style.display = 'block';
+        result.textContent = 'Unsupported file type. Please upload a PDF or DOCX file.';
+        return false;
+      }
+      if (file && file.size === 0) {
+        result.style.display = 'block';
+        result.textContent = 'The selected file is empty. Please choose a valid PDF or DOCX.';
+        return false;
+      }
+      var formData = new FormData();
+      formData.append('resume', file);
+      // Creative loading animation
+      result.innerHTML = `<div id="loading-animation" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;">
+        <div style="margin-bottom:1rem;">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="animation:spin 1.2s linear infinite;">
+            <circle cx="24" cy="24" r="20" stroke="#7f5af0" stroke-width="4" fill="none" opacity="0.2"/>
+            <path d="M44 24a20 20 0 0 1-20 20" stroke="#2cb67d" stroke-width="4" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div style="font-size:1.1rem;color:#7f5af0;font-weight:600;letter-spacing:0.5px;">Analyzing your resume...</div>
+      </div>
+      <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+      </style>`;
+      result.style.display = 'block';
+      const API_BASE = window.__BACKEND_URL || 'http://localhost:3001';
+  const role = (document.getElementById('target-role')?.value || '').trim();
+  const jd = (document.getElementById('job-desc')?.value || '').trim();
+  const params = new URLSearchParams();
+  if (role) params.set('role', role);
+  if (jd) params.set('jd', jd);
+  const qs = params.toString();
+  fetch(API_BASE + '/analyze' + (qs ? ('?' + qs) : ''), {
+        method: 'POST',
+        body: formData
+      })
+        .then(async res => {
+          if (!res.ok) {
+            // Try JSON first, then text, then status
+            try {
+              const error = await res.json();
+              result.innerHTML = 'Error: ' + (error.error || 'Unknown error.');
+              return null;
+            } catch (_) {
+              try {
+                const text = await res.text();
+                result.innerHTML = 'Error: ' + (text || ('HTTP ' + res.status));
+                return null;
+              } catch (_) {
+                result.innerHTML = 'Error: HTTP ' + res.status;
+                return null;
+              }
+            }
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (!data) return;
+          // Cool transition for result outcome
+          result.style.opacity = 0;
+          setTimeout(() => {
+            if (data && data.text) {
+              let feedbackHtml = '';
+                      if (data.score !== undefined && data.feedback) {
+                        feedbackHtml = `<div style="font-size:2rem;font-weight:800;margin-bottom:0.7rem;letter-spacing:1px;text-align:center;">
+                          <span style="background:linear-gradient(90deg,#7f5af0,#2cb67d);color:#fff;padding:0.4em 1.2em;border-radius:2em;box-shadow:0 2px 12px rgba(127,90,240,0.12);font-size:2.2rem;">${data.score}/100</span>
+                          <div style="font-size:1.1rem;color:#232526;font-weight:600;margin-top:0.7rem;">Resume Score</div>
+                        </div>
+                        <div style="margin-bottom:1.2rem;text-align:center;">
+                          <span style="font-size:1.1rem;color:#7f5af0;font-weight:700;letter-spacing:0.5px;">Feedback</span><br>
+                          <pre style="white-space:pre-wrap;font-size:1.1rem;background:#f6f6f6;border-radius:12px;padding:1em;margin-top:0.5em;box-shadow:0 2px 8px rgba(127,90,240,0.07);font-weight:600;color:#232526;">${data.feedback}</pre>
+                        </div>`;
+              }
+              let hfHtml = '';
+                if (data.hfResult && Array.isArray(data.hfResult)) {
+                hfHtml = `<div style="margin-bottom:1rem;"><span style="font-size:1rem;color:#2cb67d;font-weight:500;">AI Sentiment Analysis:</span><br>`;
+                      data.hfResult.forEach(item => {
+                        const color = item.label === 'POSITIVE' ? '#2cb67d' : '#ef4565';
+                        hfHtml += `<span style="display:inline-block;margin:0.4em 0.7em 0.4em 0;padding:0.5em 1.4em;border-radius:2em;background:${color};color:#fff;font-weight:800;letter-spacing:1px;font-size:1.2rem;box-shadow:0 2px 12px rgba(44,182,125,0.12);">${item.label} ${(item.score*100).toFixed(1)}%</span>`;
+                      });
+                      hfHtml += `</div>`;
+                } else if (data.hfResult && data.hfResult.warning) {
+                hfHtml = `<div style="color:#8a6d3b;background:#fff3cd;border:1px solid #ffeeba;padding:0.7rem 1rem;border-radius:10px;font-weight:600;">${data.hfResult.warning}</div>`;
+                } else if (data.hfResult && data.hfResult.error) {
+                hfHtml = `<div style="color:#ef4565;font-weight:600;">AI Error: ${data.hfResult.error}</div>`;
+                } else if (data.hfResult && data.hfResult.warning) {
+                  hfHtml = `<div style="color:#8a6d3b;background:#fff3cd;border:1px solid #ffeeba;padding:0.7rem 1rem;border-radius:10px;font-weight:600;">${data.hfResult.warning}</div>`;
+              }
+                    let roleFitHtml = '';
+                    if (data.roleFit && typeof data.roleFit.match === 'number') {
+                      const m = data.roleFit.match;
+                      const label = data.roleFit.role || 'role';
+                      const color = m >= 70 ? '#2cb67d' : (m >= 40 ? '#f5a524' : '#ef4565');
+                      roleFitHtml = `<div style="margin:0.6rem 0 1rem;text-align:center;">
+                        <span style="display:inline-block;padding:0.5em 1.2em;border-radius:2em;background:${color};color:#fff;font-weight:800;letter-spacing:0.5px;">${label} match: ${m}%</span>
+                      </div>`;
+                    }
+                    let explainHtml = '';
+                    if (data.explain && (Array.isArray(data.explain.present) || Array.isArray(data.explain.missing))) {
+                      const present = (data.explain.present || []).slice(0, 50);
+                      const missing = (data.explain.missing || []).slice(0, 50);
+                      explainHtml = `<div style="margin-top:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.8rem;">
+                        <div>
+                          <div style="font-weight:800;color:#2cb67d;margin-bottom:0.4rem;">Present keywords</div>
+                          <div>${present.map(k=>`<span style=\"display:inline-block;margin:0.25em;padding:0.35em 0.8em;border-radius:1em;background:#e9fff5;color:#166649;font-weight:700;\">${k}</span>`).join('')}</div>
+                        </div>
+                        <div>
+                          <div style="font-weight:800;color:#ef4565;margin-bottom:0.4rem;">Missing keywords</div>
+                          <div>${missing.map(k=>`<span style=\"display:inline-block;margin:0.25em;padding:0.35em 0.8em;border-radius:1em;background:#fff1f3;color:#7a1726;font-weight:700;\">${k}</span>`).join('') || '<span style="opacity:0.7;">None detected</span>'}</div>
+                        </div>
+                      </div>`;
+                    }
+                    result.innerHTML = `<div style="background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(127,90,240,0.09);padding:2.2rem 1.2rem 1.2rem 1.2rem;margin-bottom:2rem;max-width:700px;margin:auto;">
+                      ${feedbackHtml}
+                      ${roleFitHtml}
+                      ${hfHtml}
+                      ${explainHtml}
+                      <div style="margin-top:1.2rem;text-align:center;display:flex;gap:0.6rem;justify-content:center;flex-wrap:wrap;">
+                        <button id="show-text-btn" style="font-size:1rem;padding:0.6em 1.4em;border-radius:2em;background:linear-gradient(90deg,#7f5af0,#2cb67d);color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(127,90,240,0.07);cursor:pointer;transition:background 0.2s;">Show Extracted Resume Text</button>
+                        <button id="download-json-btn" style="font-size:1rem;padding:0.6em 1.4em;border-radius:2em;background:#232526;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">Download JSON</button>
+                        <button id="download-csv-btn" style="font-size:1rem;padding:0.6em 1.4em;border-radius:2em;background:#2cb67d;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">Download CSV</button>
+                        <button id="copy-summary-btn" style="font-size:1rem;padding:0.6em 1.4em;border-radius:2em;background:#414345;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;">Copy Summary</button>
+                        <div id="extracted-text-container" style="display:none;margin-top:0.7em;">
+                          <span style="font-size:1.1rem;color:#232526;font-weight:700;">Extracted Resume Text</span><br>
+                          <pre style="white-space:pre-wrap;font-size:1.1rem;background:#f6f6f6;border-radius:12px;padding:1em;margin-top:0.5em;box-shadow:0 2px 8px rgba(127,90,240,0.07);font-weight:500;color:#232526;">${data.text}</pre>
+                        </div>
+                      </div>
+                    </div>`;
+                    // Add button event listener for toggling extracted text
+                    const showTextBtn = document.getElementById('show-text-btn');
+                    const extractedTextContainer = document.getElementById('extracted-text-container');
+                    if (showTextBtn && extractedTextContainer) {
+                      showTextBtn.addEventListener('click', function() {
+                        if (extractedTextContainer.style.display === 'none') {
+                          extractedTextContainer.style.display = 'block';
+                          showTextBtn.textContent = 'Hide Extracted Resume Text';
+                        } else {
+                          extractedTextContainer.style.display = 'none';
+                          showTextBtn.textContent = 'Show Extracted Resume Text';
+                        }
+                      });
+                    }
+                    // Wire JSON download and summary copy
+                    const dlBtn = document.getElementById('download-json-btn');
+                    if (dlBtn) {
+                      dlBtn.addEventListener('click', () => {
+                        try {
+                          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = 'analysis.json';
+                          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        } catch {}
+                      });
+                    }
+                    const copyBtn = document.getElementById('copy-summary-btn');
+                    const csvBtn = document.getElementById('download-csv-btn');
+                    if (csvBtn) {
+                      csvBtn.addEventListener('click', () => {
+                        try {
+                          const rows = [];
+                          rows.push(['score','feedback','role','roleMatch','presentKeywords','missingKeywords']);
+                          const present = (data.explain && Array.isArray(data.explain.present)) ? data.explain.present.join('|') : '';
+                          const missing = (data.explain && Array.isArray(data.explain.missing)) ? data.explain.missing.join('|') : '';
+                          rows.push([data.score ?? '', (data.feedback||'').replace(/\n/g,' '), (data.roleFit?.role||''), (data.roleFit?.match||''), present, missing]);
+                          const csv = rows.map(r => r.map(v => {
+                            const s = String(v ?? '');
+                            return /[",\n]/.test(s) ? '"' + s.replaceAll('"','""') + '"' : s;
+                          }).join(',')).join('\n');
+                          const blob = new Blob([csv], { type: 'text/csv' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = 'analysis.csv';
+                          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        } catch {}
+                      });
+                    }
+                    if (copyBtn) {
+                      copyBtn.addEventListener('click', async () => {
+                        const parts = [];
+                        if (typeof data.score === 'number') parts.push(`Score: ${data.score}/100`);
+                        if (data.roleFit && typeof data.roleFit.match === 'number') parts.push(`Role match (${data.roleFit.role}): ${data.roleFit.match}%`);
+                        if (data.feedback) parts.push('Feedback:\n' + data.feedback);
+                        const text = parts.join('\n');
+                        try { await navigator.clipboard.writeText(text); copyBtn.textContent = 'Copied!'; setTimeout(()=> copyBtn.textContent='Copy Summary', 1200); } catch {}
+                      });
+                    }
+            } else if (data && data.error) {
+              result.innerHTML = 'Error: ' + data.error;
+            } else {
+              result.innerHTML = 'No text found or error.';
+            }
+            result.style.transition = 'opacity 0.7s';
+            result.style.opacity = 1;
+          }, 600);
+        })
+        .catch((err) => {
+          result.textContent = 'Network error. Is the backend running on http://localhost:3001?';
+        })
+        .finally(() => {
+          // Send a lightweight event to backend (best-effort)
+          try {
+            fetch((window.__BACKEND_URL || 'http://localhost:3001') + '/events', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ type: 'analyze_complete' })
+            }).catch(() => {});
+          } catch {}
+        });
+      return false;
+    }
+    function submitContact() {
+      const name = (document.getElementById('contact-name')?.value || '').trim();
+      const email = (document.getElementById('contact-email')?.value || '').trim();
+      const message = (document.getElementById('contact-message')?.value || '').trim();
+      const statusEl = document.getElementById('contact-status');
+      const API_BASE = window.__BACKEND_URL || 'http://localhost:3001';
+      statusEl.textContent = 'Sending…';
+      fetch(API_BASE + '/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message, page: 'analyzer' })
+      }).then(async (res) => {
+        if (!res.ok) {
+          try { const e = await res.json(); statusEl.textContent = 'Error: ' + (e.error || 'Failed to send'); }
+          catch { statusEl.textContent = 'Error sending message.'; }
+          return;
+        }
+        statusEl.textContent = 'Thanks! I will get back to you.';
+        (document.getElementById('contact-form')?.reset && document.getElementById('contact-form').reset());
+      }).catch(() => {
+        statusEl.textContent = 'Network error. Try again later.';
+      });
+      return false;
+    }
+  </script>
+</body>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "AI Resume Analyzer",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any",
+  "description": "Upload a PDF or DOCX and get instant feedback, role fit, sentiment, and keyword gap analysis.",
+  "url": "demo-resume-analyzer.html",
+  "image": "resume%20analyzer%20logo.png"
+}
+</script>
+</html>

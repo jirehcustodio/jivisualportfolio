@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Air Quality Monitor</title>
+  <meta name="description" content="Live CO₂/PM2.5/TVOC streaming over SSE with alert thresholds. Ingest via HTTP or MQTT; simulate readings instantly." />
+  <meta property="og:title" content="IoT Air Quality Monitor" />
+  <meta property="og:description" content="Live CO₂/PM2.5/TVOC streaming with alert thresholds and simulation." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="air-quality-logo.svg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+  html, body { height:auto; min-height:100%; overflow:auto; }
+  /* Opt-out of global overlays on this page */
+  .aq-page .scroll-bg, .aq-page .creative-blobs, .aq-page .sticky-cta, .aq-page #sidebar-left { display:none !important; }
+  .aq-page { font-family: 'Sora','Space Grotesk','Inter',system-ui,Arial,sans-serif; }
+  .aq-page .main-header { margin: 8px auto 12px; max-width: 980px; border-radius: 12px; padding: 10px 14px; position: sticky; top: 0; z-index: 10; }
+  .aq-page .container { padding: 0 12px; }
+    .aq-page { font-size: 0.95rem; }
+    .aq-wrap { max-width: 980px; margin: 0 auto; padding: clamp(8px, 2vw, 16px); }
+    .aq-card { background:#fff; border:1px solid #e6e6e6; border-radius: 12px; padding: clamp(.75rem, 1.5vw, 1rem); box-shadow: 0 4px 18px rgba(0,0,0,0.06); margin: .75rem 0; }
+    .aq-card h2, .aq-card h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
+    .aq-grid { display:grid; gap:1rem; grid-template-columns: 1fr; }
+    .aq-legend { display:flex; gap:.6rem; flex-wrap:wrap; }
+    .chip { border:1px dashed rgba(0,0,0,0.15); padding:.25rem .55rem; border-radius:999px; background:#fff; font-size:.85rem; }
+    .aq-controls { display:flex; gap:.5rem; flex-wrap: wrap; align-items:center; }
+    .aq-card .cta-btn { padding:.45rem .7rem; font-size:.9rem; }
+    .aq-controls input { height:32px; padding:.3rem .5rem; font-size:.9rem; }
+    #aq-chart { width:100%; height: clamp(160px, 28vh, 260px); display:block; }
+    .stat-row { display:flex; gap:.75rem; flex-wrap:wrap; align-items:center; font-size:.9rem; }
+  /* Metric filter chips */
+  .filters { display:flex; gap:.4rem; flex-wrap: wrap; align-items:center; }
+  .filter-chip { border:1px solid var(--card-border, #e6e6e6); padding:.28rem .55rem; border-radius:999px; background:#fff; font-size:.85rem; font-weight:700; cursor:pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+  .filter-chip.active { color:#fff; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+  .filter-chip.co2.active { background:#7f5af0; border-color:#7f5af0; }
+  .filter-chip.pm25.active { background:#ef4565; border-color:#ef4565; }
+  .filter-chip.tvoc.active { background:#2cb67d; border-color:#2cb67d; }
+    @media (min-width: 780px) {
+      .aq-grid { grid-template-columns: 2fr 1fr; }
+      #aq-chart { height: clamp(200px, 30vh, 320px); }
+    }
+    @media (min-width: 1080px) {
+      .aq-grid { grid-template-columns: 3fr 1.25fr; }
+    }
+  /* Floating back button for mobile */
+  .back-fab { position: fixed; left: 12px; bottom: 12px; z-index: 50; padding: .55rem .9rem; border-radius: 999px; border: 1px solid var(--card-border, #e6e6e6); background:#fff; color: var(--text, #232526); text-decoration: none; font-weight: 800; letter-spacing: .3px; box-shadow: 0 10px 24px rgba(0,0,0,0.15); }
+  .back-fab:active { transform: translateY(1px); }
+  @media (min-width: 780px) { .back-fab { display:none; } }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.umd.min.js"></script>
+</head>
+<body class="asp-page aq-page">
+  <header class="main-header">
+    <div class="logo"><span class="logo-animated-text">IoT Air Quality</span></div>
+    <div class="header-actions">
+      <a href="index.html" class="cta-btn ghost" aria-label="Back to Home">Home</a>
+    </div>
+  </header>
+  <div class="container asp-page">
+    <div class="aq-wrap aq-grid">
+    <div class="aq-card">
+      <h2>Live Air Quality</h2>
+      <div class="aq-controls">
+        <button id="btn-sim" class="cta-btn" type="button">Simulate sample</button>
+        <button id="btn-clear" class="cta-btn ghost" type="button">Clear</button>
+  <span class="mini" id="status" aria-live="polite" style="display:inline-flex;align-items:center;gap:.4rem"><span id="status-dot" style="width:10px;height:10px;border-radius:50%;background:#aaa;display:inline-block"></span><span id="status-text"></span></span>
+      </div>
+      <div class="aq-controls mini" style="margin-top:.4rem">
+        <button id="btn-zoom-in" class="cta-btn" type="button" title="Zoom in">Zoom In</button>
+        <button id="btn-zoom-out" class="cta-btn ghost" type="button" title="Zoom out">Zoom Out</button>
+        <button id="btn-zoom-reset" class="cta-btn ghost" type="button" title="Reset zoom">Reset</button>
+        <span class="mini" style="opacity:.75">Tip: use mouse wheel or pinch to zoom</span>
+      </div>
+      <div class="aq-controls mini" style="margin-top:.2rem">
+        <div class="filters" role="group" aria-label="Toggle metrics">
+          <button id="f-co2" class="filter-chip co2 active" type="button">CO₂</button>
+          <button id="f-pm25" class="filter-chip pm25 active" type="button">PM2.5</button>
+          <button id="f-tvoc" class="filter-chip tvoc active" type="button">TVOC</button>
+        </div>
+      </div>
+      <canvas id="aq-chart"></canvas>
+      <div class="stat-row mini">
+        <span>CO₂: <strong id="co2">-</strong> ppm</span>
+        <span>PM2.5: <strong id="pm25">-</strong> µg/m³</span>
+        <span>TVOC: <strong id="tvoc">-</strong> ppb</span>
+        <span>Temp: <strong id="temp">-</strong> °C</span>
+        <span>Humidity: <strong id="hum">-</strong> %</span>
+      </div>
+  </div>
+  <div class="aq-card">
+      <h3>Thresholds</h3>
+      <div class="aq-controls mini">
+        <label>CO₂</label><input id="th-co2" type="number" min="400" step="50"/>
+        <label>PM2.5</label><input id="th-pm25" type="number" min="0" step="1"/>
+        <button id="btn-save-th" class="cta-btn" type="button">Save</button>
+      </div>
+      <div class="aq-legend mini">
+        <span class="chip">Healthy: CO₂ < 1000 ppm, PM2.5 < 12 µg/m³</span>
+        <span class="chip">Warning: exceed threshold → alerts (highlight)</span>
+      </div>
+  </div>
+  </div>
+  </div>
+  <footer class="main-footer"><div class="footer-content">Made for demo</div></footer>
+
+<script>
+// Robust API base: works from file:// or http(s) origins
+const ORIGIN = (location.origin && location.origin.startsWith('http')) ? location.origin : 'http://localhost';
+const API = ORIGIN.replace(/:\d+$/, '') + ':4002';
+let chart;
+const labels = [];
+const series = { co2: [], pm25: [], tvoc: [] };
+const COLORS = { co2: '#7f5af0', pm25: '#ef4565', tvoc: '#2cb67d' };
+const FILTERS = { co2: true, pm25: true, tvoc: true };
+
+function setupChart() {
+  const ctx = document.getElementById('aq-chart');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets:[
+      { label: 'CO₂', data: series.co2, borderColor: COLORS.co2, backgroundColor: COLORS.co2+'22', borderWidth:2, pointRadius:0, tension: .25, fill:true },
+      { label: 'PM2.5', data: series.pm25, borderColor: COLORS.pm25, backgroundColor: COLORS.pm25+'22', borderWidth:2, pointRadius:0, tension: .25, fill:true },
+      { label: 'TVOC', data: series.tvoc, borderColor: COLORS.tvoc, backgroundColor: COLORS.tvoc+'22', borderWidth:2, pointRadius:0, tension: .25, fill:true }
+    ]},
+    options: {
+      animation:false,
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{ mode:'nearest', intersect:false },
+      plugins:{
+        legend:{ labels:{ boxWidth:12, usePointStyle:true, font:{ size:10 } } },
+        zoom: {
+          limits: { x: { minRange: 10 }, y: { min: 0 } },
+          pan: { enabled: true, mode: 'x' },
+          zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+        }
+      },
+      scales:{
+        x: { title: { display: true, text: 'Time' } },
+        y: { beginAtZero:true, title: { display: true, text: 'Value' } }
+      }
+    }
+  });
+}
+function pushReading(r) {
+  const t = new Date(r.ts).toLocaleTimeString();
+  labels.push(t);
+  series.co2.push(r.co2);
+  series.pm25.push(r.pm25);
+  series.tvoc.push(r.tvoc);
+  if (labels.length > 120) { labels.shift(); series.co2.shift(); series.pm25.shift(); series.tvoc.shift(); }
+  document.getElementById('co2').textContent = r.co2;
+  document.getElementById('pm25').textContent = r.pm25;
+  document.getElementById('tvoc').textContent = r.tvoc;
+  document.getElementById('temp').textContent = r.temp;
+  document.getElementById('hum').textContent = r.hum;
+  chart.update('none');
+}
+async function loadRecent() {
+  const res = await fetch(API + '/readings?limit=100');
+  const arr = await res.json();
+  arr.forEach(pushReading);
+}
+function connectSSE() {
+  let es;
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  let retry = 0;
+  const maxDelay = 15000;
+  function setStatus(color, message) {
+    if (dot) dot.style.background = color;
+    if (txt) txt.textContent = message || '';
+  }
+  function open() {
+    try { if (es) { es.close(); es = null; } } catch {}
+    es = new EventSource(API + '/live');
+    es.onopen = () => { retry = 0; setStatus('#2cb67d', 'Live'); setTimeout(()=>{ if (txt && txt.textContent==='Live') txt.textContent=''; }, 2000); };
+    es.onerror = () => {
+      setStatus('#ef4565', 'Reconnecting…');
+      try { es.close(); } catch {}
+      const delay = Math.min(maxDelay, 750 * Math.pow(1.5, retry++));
+      setTimeout(open, delay);
+    };
+    es.addEventListener('reading', (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        pushReading(msg.data);
+        setStatus('#2cb67d', '');
+      } catch {}
+    });
+  }
+  open();
+}
+async function loadThresholds() {
+  const res = await fetch(API + '/thresholds');
+  const th = await res.json();
+  document.getElementById('th-co2').value = th.co2;
+  document.getElementById('th-pm25').value = th.pm25;
+}
+async function saveThresholds() {
+  const body = {
+    co2: parseFloat(document.getElementById('th-co2').value||'0')||0,
+    pm25: parseFloat(document.getElementById('th-pm25').value||'0')||0
+  };
+  await fetch(API + '/thresholds',{ method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+  const txt = document.getElementById('status-text'); const dot = document.getElementById('status-dot');
+  if (txt) txt.textContent = 'Thresholds saved'; if (dot) dot.style.background = '#7f5af0';
+  setTimeout(()=>{ if (txt && txt.textContent==='Thresholds saved') txt.textContent=''; if (dot && dot.style.background === 'rgb(127, 90, 240)') dot.style.background = '#2cb67d'; }, 1800);
+}
+async function simulate() {
+  await fetch(API + '/simulate', { method:'POST' });
+  const txt = document.getElementById('status-text'); const dot = document.getElementById('status-dot');
+  if (txt) txt.textContent = 'Simulated one reading'; if (dot) dot.style.background = '#7f5af0';
+  setTimeout(()=>{ if (txt && txt.textContent==='Simulated one reading') txt.textContent=''; if (dot && dot.style.background === 'rgb(127, 90, 240)') dot.style.background = '#2cb67d'; }, 1800);
+}
+
+// Live highlight when threshold exceeded
+let th = { co2: 1200, pm25: 35 };
+setInterval(async ()=>{ try { const r = await (await fetch(API + '/thresholds')).json(); th = r; } catch {} }, 60000);
+
+function tickHighlight() {
+  const co2 = series.co2.at(-1) || 0; const pm25 = series.pm25.at(-1) || 0;
+  const el = document.querySelector('.aq-card');
+  if (co2 > th.co2 || pm25 > th.pm25) {
+    el.style.boxShadow = '0 0 0 3px #ef456533, 0 4px 18px rgba(0,0,0,0.12)';
+  } else {
+    el.style.boxShadow = '0 4px 18px rgba(0,0,0,0.06)';
+  }
+  requestAnimationFrame(tickHighlight);
+}
+
+document.getElementById('btn-save-th').addEventListener('click', saveThresholds);
+ document.getElementById('btn-sim').addEventListener('click', simulate);
+ document.getElementById('btn-clear').addEventListener('click', ()=>{ labels.length=0; series.co2.length=0; series.pm25.length=0; series.tvoc.length=0; chart.update(); });
+ document.getElementById('btn-zoom-in').addEventListener('click', ()=>{ try { chart.zoom({ x: 1.2 }); } catch { /* plugin not loaded */ } });
+ document.getElementById('btn-zoom-out').addEventListener('click', ()=>{ try { chart.zoom({ x: 0.8 }); } catch {} });
+ document.getElementById('btn-zoom-reset').addEventListener('click', ()=>{ try { chart.resetZoom(); } catch {} });
+ // Metric filters
+ function applyFilters(){ if(!chart) return; chart.data.datasets[0].hidden = !FILTERS.co2; chart.data.datasets[1].hidden = !FILTERS.pm25; chart.data.datasets[2].hidden = !FILTERS.tvoc; chart.update('none'); }
+ function bindFilter(id,key){ const el=document.getElementById(id); el?.addEventListener('click', ()=>{ FILTERS[key]=!FILTERS[key]; el.classList.toggle('active', FILTERS[key]); applyFilters(); }); el?.classList.toggle('active', FILTERS[key]); }
+ bindFilter('f-co2','co2'); bindFilter('f-pm25','pm25'); bindFilter('f-tvoc','tvoc');
+
+setupChart();
+loadRecent();
+loadThresholds();
+connectSSE();
+requestAnimationFrame(tickHighlight);
+// Deep link controls: ?simulate=1 triggers a sample; ?filters=co2,pm25
+(function initFromQuery(){
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get('simulate') === '1') simulate();
+    const f = (q.get('filters')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+    if (f.length) {
+      FILTERS.co2 = f.includes('co2');
+      FILTERS.pm25 = f.includes('pm25');
+      FILTERS.tvoc = f.includes('tvoc');
+      ['co2','pm25','tvoc'].forEach(k => {
+        const el = document.getElementById('f-' + k);
+        if (el) el.classList.toggle('active', FILTERS[k]);
+      });
+      applyFilters();
+    }
+  } catch {}
+})();
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "IoT Air Quality Monitor",
+  "applicationCategory": "WebApplication",
+  "operatingSystem": "Any",
+  "description": "Live CO₂/PM2.5/TVOC streaming over SSE with alert thresholds and simulation.",
+  "image": "air-quality-logo.svg"
+}
+</script>
+<a href="index.html" class="back-fab" aria-label="Back to Home">Home</a>
+</body>
+</html>

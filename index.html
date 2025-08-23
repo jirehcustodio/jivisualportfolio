@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JiVisualPortfolio — jivisualportfolio.com</title>
+  <meta name="description" content="Jireh Custodio — Engineer, Safety Officer 2, CCSA. AI + IoT projects with clean, fast UX.">
+  <link rel="canonical" href="https://jivisualportfolio.com/">
+  <meta property="og:title" content="JiVisualPortfolio — Jireh Custodio">
+  <meta property="og:description" content="AI + IoT projects • Smart Home • AI Resume Analyzer • Fast, clean UX.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jivisualportfolio.com/">
+  <meta property="og:image" content="websitelogo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="JiVisualPortfolio — Jireh Custodio">
+  <meta name="twitter:description" content="AI + IoT projects • Smart Home • AI Resume Analyzer • Fast, clean UX.">
+  <meta name="twitter:image" content="websitelogo.png">
+  <!-- Tab icon: use profile GIF as favicon with PNG fallback -->
+  <link rel="icon" type="image/gif" href="idle_animation.gif">
+  <link rel="icon" type="image/png" href="websitelogo.png" sizes="32x32">
+  <!-- Safari/Apple touch icon (PNG recommended) -->
+  <link rel="apple-touch-icon" href="websitelogo.png" sizes="180x180">
+  <link rel="preconnect" href="http://localhost:3001">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Pixel/Minecraft-like fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preload" as="image" href="idle_animation.gif">
+  <link rel="preload" as="image" href="loadinghome .gif">
+  <meta name="theme-color" content="#7f5af0">
+  <meta name="application-name" content="JiVisualPortfolio">
+  <meta name="apple-mobile-web-app-title" content="JiVisualPortfolio">
+</head>
+  <body>
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="scroll-bg" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><div class="scroll-progress__bar"></div></div>
+  <div id="login-loading" data-duration="4500" data-fade-ms="600" data-lock-bg="true" style="display:none; --loading-bg: #ffbd68;">
+    <img src="loadinghome .gif" alt="Loading…" class="loading-screen"/>
+  </div>
+  <!-- Logout full-screen overlay (adjust delay via data-delay in ms) -->
+  <div id="logout-overlay" class="logout-overlay" aria-hidden="true" style="display:none;" data-delay="1500">
+    <img src="logoutscreen.gif" alt="Logging out…" class="logout-screen"/>
+  </div>
+  <!-- Splash / Welcome overlay shown after successful login -->
+  <div id="splash" class="splash" aria-hidden="true" style="display:none;">
+    <div class="splash-inner">
+      <div class="splash-brand-glow" aria-hidden="true"></div>
+      <div class="splash-ornaments" aria-hidden="true">
+        <div class="splash-orb"></div>
+        <div class="accent-line l1"></div>
+        <div class="accent-line l2"></div>
+        <span class="sparkle s1"></span>
+        <span class="sparkle s2"></span>
+        <span class="sparkle s3"></span>
+      </div>
+      <!-- Profile GIF avatar -->
+      <div class="splash-avatar" aria-label="Profile animation">
+        <div class="avatar">
+          <img src="idle_animation.gif" alt="Profile animation" loading="eager"/>
+        </div>
+      </div>
+      <div class="splash-content" role="img" aria-label="Welcome">
+        <div class="letters" id="splash-line-1" data-text="Welcome"></div>
+        <div class="letters sub" id="splash-line-2" data-text="to my portfolio"></div>
+      </div>
+  <div class="splash-prompt" id="splash-prompt" role="button" tabindex="0" aria-label="Continue">Click or press any key to continue</div>
+    </div>
+  </div>
+  <div id="decorative-blobs" class="creative-blobs" aria-hidden="true">
+    <div class="creative-blob creative-blob-1"></div>
+    <div class="creative-blob creative-blob-2"></div>
+    <div class="creative-blob creative-blob-3"></div>
+  </div>
+  <header class="main-header">
+    <div class="logo" id="header-logo" style="display:block; animation: logoPop 1.2s cubic-bezier(.77,0,.18,1);">
+      <span class="logo-svg" aria-label="logo" style="animation: logoSpin 2.5s linear infinite;">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" stroke="#232526" stroke-width="2" fill="#fff"/>
+          <path d="M10 20 Q16 10 22 20" stroke="#414345" stroke-width="2" fill="none"/>
+          <circle cx="16" cy="16" r="3" fill="#232526"/>
+        </svg>
+      </span> <span class="logo-animated-text">Jireh's Safe Place</span>
+    </div>
+    <div class="header-actions">
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme">Theme: Pink</button>
+  <button id="safe-toggle" class="theme-toggle" aria-label="Toggle Safe Mode" title="Reduce motion and effects">Safe Mode</button>
+    </div>
+  </header>
+  <div class="container" id="main" role="main" tabindex="-1">
+    <div class="login" id="login-box">
+  <h2>Quick Intake</h2>
+  <input type="text" id="first-name" placeholder="First name" autocomplete="given-name">
+  <input type="text" id="last-name" placeholder="Surname" autocomplete="family-name">
+  <input type="number" id="age" placeholder="Age" min="1" max="120" inputmode="numeric">
+  <select id="user-type" aria-label="You are a…">
+    <option value="student">Student</option>
+    <option value="employee">Employee</option>
+    <option value="other">Other</option>
+  </select>
+  <input type="text" id="school-name" class="conditional" placeholder="School name" autocomplete="organization">
+  <input type="text" id="company-name" class="conditional" placeholder="Company name" autocomplete="organization">
+  <button onclick="submitIntake()" id="login-btn">Continue</button>
+  <p id="login-error" class="error"></p>
+  <p class="consent-copy" style="font-size:0.9rem;opacity:0.8;margin-top:0.4rem;">By continuing, your name and details are saved locally and to my Resume backend so I can greet returning visitors. You can view or delete entries anytime.</p>
+  <button id="manage-data-btn" class="cta-btn ghost" style="margin-top:0.5rem;">Manage my data</button>
+    </div>
+    <div class="portfolio" id="portfolio-box" style="display:none;">
+      <div class="portfolio-accents">
+        <div class="accent accent-1"></div>
+        <div class="accent accent-2"></div>
+        <div class="accent accent-3"></div>
+      </div>
+  <div class="tabs">
+  <button class="tab active" onclick="showTab('home')" id="tab-home">Home</button>
+  <button class="tab" onclick="showTab('coding')" id="tab-coding">Coding Portfolio</button>
+  <button class="tab" onclick="showTab('creative')" id="tab-creative">Photography & Videography</button>
+  <button class="tab" onclick="showTab('about')" id="tab-about">About</button>
+  <button class="tab" onclick="showTab('contact')" id="tab-contact">Contact</button>
+  
+      </div>
+      <div class="tab-content" id="tab-content-home">
+        <section class="home-hero">
+          <div class="hero-layout">
+            <div class="hero-left">
+              <div class="hero-glass reveal" aria-label="Intro card">
+                <div class="hero-header-row">
+                  <div id="hero-avatar-slot" class="hero-avatar-slot" aria-hidden="true"></div>
+                  <div class="hero-header-text">
+                    <h1 class="hero-title"><span class="hero-accent">Jireh</span> Custodio</h1>
+                    <p class="hero-subtitle">Engineer • Safety Officer 2 • CCSA — AI + IoT, clean and fast UX.</p>
+                  </div>
+                </div>
+                <ul class="tag-chips" aria-label="Key skills">
+                  <li class="chip">Python</li>
+                  <li class="chip">React</li>
+                  <li class="chip">Node.js</li>
+                  <li class="chip">IoT</li>
+                </ul>
+                <ul class="hero-quick" aria-label="Quick highlights">
+                  <li><strong>What I do:</strong> AI + IoT systems, polished UIs.</li>
+                  <li><strong>Recent:</strong> Smart Home Dashboard, AI Resume Analyzer, Portfolio Site.</li>
+                </ul>
+                <div class="hero-cta">
+                  <a href="#" id="explore-work" class="cta-btn">Explore Work</a>
+                  <a href="#" id="cta-about" class="cta-btn ghost">My Info</a>
+                  <a href="resume.pdf" id="download-resume" class="cta-btn" download>Download Resume (Encrypted PDF)</a>
+                </div>
+              </div>
+            </div>
+            <aside class="hero-right reveal bounce">
+              <div class="hero-panel" aria-label="Featured projects">
+                <a class="panel-tile" href="demo-smart-home.html" aria-label="Smart Home Automation">
+                  <img src="SmartHomeAutomationLogo.png" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">Smart Home</span>
+                </a>
+                <a class="panel-tile" href="demo-resume-analyzer.html" aria-label="AI Resume Analyzer">
+                  <img src="resume%20analyzer%20logo.png" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">AI Resume</span>
+                </a>
+                <a class="panel-tile" href="demo-budget-buddy.html" aria-label="Budget Buddy — Receipt OCR">
+                  <img src="budget-buddy-logo.svg" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">Budget Buddy</span>
+                </a>
+                <a class="panel-tile" href="demo-ai-study-planner.html" aria-label="AI Study Planner">
+                  <img src="ai-study-planner-logo.svg" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">AI Study Planner</span>
+                </a>
+                <a class="panel-tile" href="demo-air-quality.html" aria-label="IoT Air Quality Monitor">
+                  <img src="air-quality-logo.svg" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">Air Quality</span>
+                </a>
+                <a class="panel-tile" href="demo-portfolio-site.html" aria-label="Portfolio Website">
+                  <img src="websitelogo.png" alt="" class="tile-logo" aria-hidden="true" loading="lazy" decoding="async"/>
+                  <span class="tile-label">Website</span>
+                </a>
+              </div>
+            </aside>
+          </div>
+        </section>
+        <!-- Stats strip -->
+        <section class="home-stats" aria-label="Key highlights">
+          <div class="stat-grid">
+            <div class="stat-card reveal bounce">
+              <div class="stat-number">3</div>
+              <div class="stat-label">Featured Projects</div>
+            </div>
+            <div class="stat-card reveal bounce">
+              <div class="stat-number">2</div>
+              <div class="stat-label">Certifications</div>
+            </div>
+            <div class="stat-card reveal bounce">
+              <div class="stat-number">5+</div>
+              <div class="stat-label">Core Skills</div>
+            </div>
+          </div>
+        </section>
+        <!-- Trophy Case: Achievements -->
+        <section class="trophy-case reveal" aria-label="Trophy Case">
+          <div class="card">
+            <h3>🏆 Trophy Case</h3>
+            <div id="badges" class="badges" role="list"></div>
+            <div class="trophy-actions">
+              <button id="sync-ach" title="Sync with server (optional)">Sync</button>
+              <button id="reset-ach" title="Clear local badges">Reset</button>
+            </div>
+          </div>
+        </section>
+        <!-- Case study highlight -->
+        <section class="home-case-study reveal scrub" aria-label="Featured case study">
+          <a class="case-card scroll-animate" data-effect="slide-x" data-x="160" href="demo-smart-home.html">
+            <div class="case-visual">
+              <img src="SmartHomeAutomationLogo.png" alt="Smart Home Automation logo" class="case-img scroll-animate" data-effect="scale" data-scale-from="0.9" data-scale-to="1" loading="lazy" decoding="async"/>
+              <div class="case-glow" aria-hidden="true"></div>
+            </div>
+            <div class="case-content scroll-animate" data-effect="slide-y" data-y="90">
+              <h2 class="case-title">Smart Home Automation</h2>
+              <p class="case-desc">A responsive, IoT-forward dashboard concept for managing lights, climate, and security with real-time feedback and a clean, minimalist UX.</p>
+              <div class="case-cta">
+                <span class="cta-btn">View Case Study</span>
+              </div>
+            </div>
+          </a>
+        </section>
+        <!-- Case study storytelling (desktop enhanced) -->
+  <section class="case-story reveal scrub" aria-label="Case study: Storytelling">
+          <div class="story-grid">
+            <div class="story-steps" aria-label="Story timeline">
+              <ol>
+                <li class="story-step active" data-story="problem" tabindex="0" role="button" aria-pressed="true">
+                  <h3>Problem</h3>
+                  <p>Fragmented controls and poor feedback loops made smart home usage feel slow and confusing.</p>
+                </li>
+                <li class="story-step" data-story="approach" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Approach</h3>
+                  <p>Unified cards, real-time states, and edge-friendly update cadence. Built with clean, accessible UI patterns.</p>
+                </li>
+                <li class="story-step" data-story="impact" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Impact</h3>
+                  <p>Task time down 42%, fewer taps, and clearer system status. Users report “it just feels faster.”</p>
+                </li>
+              </ol>
+            </div>
+            <div class="story-visual">
+              <div class="story-stage" id="story-stage">
+                <div class="stage-panel stage-problem show">
+                  <img src="websitelogo.png" alt="UI friction"/>
+                </div>
+                <div class="stage-panel stage-approach">
+                  <img src="resume%20analyzer%20logo.png" alt="Unified approach"/>
+                </div>
+                <div class="stage-panel stage-impact">
+                  <img src="SmartHomeAutomationLogo.png" alt="Impact metrics"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Budget Buddy case study highlight -->
+        <section class="home-case-study reveal scrub" aria-label="Featured case study: Budget Buddy">
+          <a class="case-card scroll-animate" data-effect="slide-x" data-x="-140" href="demo-budget-buddy.html">
+            <div class="case-visual">
+              <img src="budget-buddy-logo.svg" alt="Budget Buddy logo" class="case-img scroll-animate" data-effect="scale" data-scale-from="0.9" data-scale-to="1" loading="lazy" decoding="async"/>
+              <div class="case-glow" aria-hidden="true"></div>
+            </div>
+            <div class="case-content scroll-animate" data-effect="slide-y" data-y="90">
+              <h2 class="case-title">Budget Buddy</h2>
+              <p class="case-desc">Receipt OCR + Spend Tracker. Extract line items from images or pasted text, then visualize category spend instantly—fully in-browser.</p>
+              <div class="case-cta">
+                <span class="cta-btn">Open Demo</span>
+              </div>
+            </div>
+          </a>
+        </section>
+        <!-- Budget Buddy storytelling (mini) -->
+        <section class="case-story reveal scrub" aria-label="Case study: Budget Buddy Story">
+          <div class="story-grid">
+            <div class="story-steps" aria-label="Budget Buddy timeline">
+              <ol>
+                <li class="story-step active" data-story="problem" tabindex="0" role="button" aria-pressed="true">
+                  <h3>Problem</h3>
+                  <p>Manual encoding of receipts is slow and error-prone; totals and categories are hard to track.</p>
+                </li>
+                <li class="story-step" data-story="approach" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Approach</h3>
+                  <p>In-browser OCR + quick text parser with a simple category model. Instant charting with no upload.</p>
+                </li>
+                <li class="story-step" data-story="impact" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Impact</h3>
+                  <p>Track spending faster, spot trends, and export summaries—privacy-friendly and snappy.</p>
+                </li>
+              </ol>
+            </div>
+            <div class="story-visual">
+              <div class="story-stage">
+                <div class="stage-panel stage-problem show">
+                  <img src="budget-buddy-logo.svg" alt="Scattered receipt data"/>
+                </div>
+                <div class="stage-panel stage-approach">
+                  <img src="budget-buddy-logo.svg" alt="OCR and parsing"/>
+                </div>
+                <div class="stage-panel stage-impact">
+                  <img src="budget-buddy-logo.svg" alt="Spend visualization"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Air Quality Monitor case study highlight (compact) -->
+        <section class="home-case-study reveal scrub" aria-label="Featured case study: IoT Air Quality Monitor">
+          <a class="case-card scroll-animate" data-effect="slide-x" data-x="160" href="demo-air-quality.html">
+            <div class="case-visual">
+              <img src="air-quality-logo.svg" alt="Air Quality Monitor logo" class="case-img scroll-animate" data-effect="scale" data-scale-from="0.92" data-scale-to="1" loading="lazy" decoding="async"/>
+              <div class="case-glow" aria-hidden="true"></div>
+            </div>
+            <div class="case-content scroll-animate" data-effect="slide-y" data-y="80">
+              <h2 class="case-title">IoT Air Quality Monitor</h2>
+              <p class="case-desc">Live CO₂/PM2.5/TVOC streaming over SSE with alert thresholds. Ingest via HTTP or MQTT; simulate readings instantly.</p>
+              <div class="case-cta">
+                <span class="cta-btn">Open Demo</span>
+              </div>
+            </div>
+          </a>
+        </section>
+        <!-- Air Quality Monitor storytelling (mini) -->
+        <section class="case-story reveal scrub" aria-label="Case study: IoT Air Quality Monitor Story">
+          <div class="story-grid">
+            <div class="story-steps" aria-label="IoT Air Quality timeline">
+              <ol>
+                <li class="story-step active" data-story="problem" tabindex="0" role="button" aria-pressed="true">
+                  <h3>Problem</h3>
+                  <p>Indoor air quality is invisible; without real-time insights, CO₂ and PM2.5 rise unnoticed, impacting focus and health.</p>
+                </li>
+                <li class="story-step" data-story="approach" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Approach</h3>
+                  <p>Simple sensor ingest over HTTP/MQTT feeds an Express backend with SSE; a clean UI charts CO₂/PM2.5/TVOC with alert thresholds.</p>
+                </li>
+                <li class="story-step" data-story="impact" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Impact</h3>
+                  <p>Faster ventilation decisions, clearer trends, and configurable alerts reduce exposure and improve comfort and productivity.</p>
+                </li>
+              </ol>
+            </div>
+            <div class="story-visual">
+              <div class="story-stage">
+                <div class="stage-panel stage-problem show">
+                  <img src="air-quality-logo.svg" alt="Invisible indoor air issues"/>
+                </div>
+                <div class="stage-panel stage-approach">
+                  <img src="air-quality-logo.svg" alt="Live SSE charts and thresholds"/>
+                </div>
+                <div class="stage-panel stage-impact">
+                  <img src="air-quality-logo.svg" alt="Healthier, more productive spaces"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- AI Study Planner case study highlight -->
+        <section class="home-case-study reveal scrub" aria-label="Featured case study: AI Study Planner">
+          <a class="case-card scroll-animate" data-effect="slide-x" data-x="-160" href="demo-ai-study-planner.html">
+            <div class="case-visual">
+              <img src="ai-study-planner-logo.svg" alt="AI Study Planner logo" class="case-img scroll-animate" data-effect="scale" data-scale-from="0.9" data-scale-to="1" loading="lazy" decoding="async"/>
+              <div class="case-glow" aria-hidden="true"></div>
+            </div>
+            <div class="case-content scroll-animate" data-effect="slide-y" data-y="90">
+              <h2 class="case-title">AI Study Planner</h2>
+              <p class="case-desc">Enter subjects, deadlines, and hours. Auto-generate a balanced weekly plan and track progress—fully client-side.</p>
+              <div class="case-cta">
+                <span class="cta-btn">Open Demo</span>
+              </div>
+            </div>
+          </a>
+        </section>
+        <!-- AI Study Planner storytelling (mini) -->
+        <section class="case-story reveal scrub" aria-label="Case study: AI Study Planner Story">
+          <div class="story-grid">
+            <div class="story-steps" aria-label="AI Study Planner timeline">
+              <ol>
+                <li class="story-step active" data-story="problem" tabindex="0" role="button" aria-pressed="true">
+                  <h3>Problem</h3>
+                  <p>Hard to balance subjects and deadlines; time gets misallocated without a clear plan.</p>
+                </li>
+                <li class="story-step" data-story="approach" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Approach</h3>
+                  <p>Deadline-aware heuristics split hours into daily sessions; quick toggles to mark done and auto-update charts.</p>
+                </li>
+                <li class="story-step" data-story="impact" tabindex="0" role="button" aria-pressed="false">
+                  <h3>Impact</h3>
+                  <p>More consistent studying, clearer priorities, and better exam readiness with minimal setup.</p>
+                </li>
+              </ol>
+            </div>
+            <div class="story-visual">
+              <div class="story-stage">
+                <div class="stage-panel stage-problem show">
+                  <img src="ai-study-planner-logo.svg" alt="No plan confusion"/>
+                </div>
+                <div class="stage-panel stage-approach">
+                  <img src="ai-study-planner-logo.svg" alt="Balanced plan"/>
+                </div>
+                <div class="stage-panel stage-impact">
+                  <img src="ai-study-planner-logo.svg" alt="Confidence boost"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Logo wall / tools -->
+  <section class="home-logo-wall reveal scrub" aria-label="Tools I use">
+          <h3 class="logo-wall-title">Tools & Tech</h3>
+          <div class="logo-wall">
+            <span class="logo-badge">Python</span>
+            <span class="logo-badge">React</span>
+            <span class="logo-badge">Node.js</span>
+            <span class="logo-badge">Express</span>
+            <span class="logo-badge">Multer</span>
+            <span class="logo-badge">Hugging Face</span>
+            <img src="resume%20analyzer%20logo.png" alt="Resume Analyzer" class="logo-img-badge" loading="lazy" decoding="async"/>
+            <img src="websitelogo.png" alt="Portfolio" class="logo-img-badge" loading="lazy" decoding="async"/>
+          </div>
+        </section>
+      </div>
+      <div class="tab-content" id="tab-content-coding" style="display:none;">
+        <h1>Coding Portfolio</h1>
+        <div class="portfolio-grid">
+          <a href="demo-smart-home.html" class="project-icon-card" aria-label="Smart Home Automation" title="Smart Home Automation" data-title="Smart Home Automation">
+            <img src="SmartHomeAutomationLogo.png" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">Smart Home Automation</span>
+          </a>
+          <a href="demo-resume-analyzer.html" class="project-icon-card" aria-label="AI-Powered Resume Analyzer" title="AI-Powered Resume Analyzer" data-title="AI-Powered Resume Analyzer">
+            <img src="resume%20analyzer%20logo.png" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">AI-Powered Resume Analyzer</span>
+          </a>
+          <a href="demo-budget-buddy.html" class="project-icon-card" aria-label="Budget Buddy — Receipt OCR" title="Budget Buddy — Receipt OCR" data-title="Budget Buddy">
+            <img src="budget-buddy-logo.svg" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">Budget Buddy — Receipt OCR</span>
+          </a>
+          <a href="demo-ai-study-planner.html" class="project-icon-card" aria-label="AI Study Planner" title="AI Study Planner" data-title="AI Study Planner">
+            <img src="ai-study-planner-logo.svg" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">AI Study Planner</span>
+          </a>
+          <a href="demo-air-quality.html" class="project-icon-card" aria-label="IoT Air Quality Monitor" title="IoT Air Quality Monitor" data-title="Air Quality Monitor">
+            <img src="air-quality-logo.svg" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">IoT Air Quality Monitor</span>
+          </a>
+          <a href="demo-portfolio-site.html" class="project-icon-card" aria-label="Portfolio Website" title="Portfolio Website" data-title="Portfolio Website">
+            <img src="websitelogo.png" alt="" class="project-logo project-logo--image" aria-hidden="true" loading="lazy" decoding="async"/>
+            <span class="sr-only">Portfolio Website</span>
+          </a>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-content-creative" style="display:none;">
+        <h1>Photography & Videography</h1>
+        <div class="portfolio-content">
+          <div class="card">
+            <h3>Urban Exploration</h3>
+            <p>Photo series capturing city life and architecture. Shot with Sony Alpha, edited in Lightroom.</p>
+          </div>
+          <div class="card">
+            <h3>Travel Vlog Series</h3>
+            <p>Short films and vlogs from travels around Asia. Filmed and edited with DaVinci Resolve.</p>
+          </div>
+          <div class="card">
+            <h3>Portraits & Events</h3>
+            <p>Professional event coverage and creative portrait sessions. Portfolio available on request.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-content-about" style="display:none;">
+        <h1 class="about-title">About Me</h1>
+        <div class="about-bio-card card">
+          <h2 style="font-weight:800;letter-spacing:1.2px;margin-bottom:0.7rem;">𝗘𝗻𝗴𝗿. 𝗝𝗶𝗿𝗲𝗵 𝗕. 𝗖𝘂𝘀𝘁𝗼𝗱𝗶𝗼, 𝗖𝗖𝗦𝗔</h2>
+          <p style="font-size:1.1rem;margin-bottom:0.5rem;">
+            <span style="font-weight:600;">Bachelor of Science in Computer Engineering</span><br>
+            Naga College Foundation, Inc.<br>
+            <span style="font-size:0.98rem;">Class of 2025</span><br>
+            <span style="font-weight:600;">Safety Officer 2</span> | <span style="font-weight:600;">Certified Cloud System Analyst</span>
+          </p>
+          <div class="about-leadership">
+            <h3 style="margin-top:1.2rem;margin-bottom:0.5rem;color:#7f5af0;font-weight:700;">Leadership & Expertise</h3>
+            <ul class="about-leadership-list" style="list-style:none;padding:0;margin:0 0 0 0.5rem;font-size:1rem;">
+              <li><span class="about-role">🎬</span> Multimedia Director, ICPEP SE Region 5 (2023-2024)</li>
+              <li><span class="about-role">📢</span> Public Relation Officer, ICPEP SE NCF (2023-2024)</li>
+              <li><span class="about-role">💼</span> Business Manager, ICPEP SE NCF (2022-2023)</li>
+              <li><span class="about-role">🎓</span> 3rd Year Representative, College Student Council (2023-2024)</li>
+              <li><span class="about-role">🖥️</span> Vice Chairman of Technical Media, College Student Council (2023-2024)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tab-content" id="tab-content-contact" style="display:none;">
+        <h1>Contact</h1>
+        <p>Email: your@email.com</p>
+        <p>Instagram: @yourhandle</p>
+      </div>
+      
+    </div>
+  </div>
+  <!-- Trust: Testimonials -->
+  <section class="home-testimonials reveal" aria-label="What people say" style="max-width:960px;margin:2rem auto;">
+    <h3 style="font-weight:800;letter-spacing:1px;margin-bottom:0.8rem;">Testimonials</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+      <blockquote class="card" style="margin:0;">“Polished UX and fast turnarounds. A joy to collaborate with.”<br><small>— Product Lead</small></blockquote>
+      <blockquote class="card" style="margin:0;">“Bridges AI ideas with working demos quickly. Great communicator.”<br><small>— Team Mentor</small></blockquote>
+      <blockquote class="card" style="margin:0;">“Attention to detail and accessibility. Users noticed the difference.”<br><small>— QA Engineer</small></blockquote>
+    </div>
+  </section>
+  <!-- Observability: Live metrics snapshot -->
+  <section class="home-metrics reveal" aria-label="Live metrics" style="max-width:960px;margin:2rem auto;">
+    <h3 style="font-weight:800;letter-spacing:1px;margin-bottom:0.8rem;">Live Metrics
+      <span id="metrics-status" title="Backend status" aria-live="polite" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#999;margin-left:8px;vertical-align:middle;"></span>
+    </h3>
+    <div id="metrics" class="card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;padding:1rem;"></div>
+  </section>
+  <div class="creative-blobs">
+    <div class="creative-blob creative-blob-1"></div>
+    <div class="creative-blob creative-blob-2"></div>
+    <div class="creative-blob creative-blob-3"></div>
+  </div>
+  <!-- Removed duplicate header -->
+  <aside id="sidebar-left" class="sidebar-left" aria-label="Quick actions">
+    <nav class="side-rail">
+      <button class="rail-item" title="Logout" aria-label="Logout" onclick="logout()">
+        <img src="logoutbutton.gif" alt="" class="rail-icon-img"/>
+        <span class="rail-label">Logout</span>
+      </button>
+  <a class="rail-item" title="GitHub" aria-label="GitHub" href="https://github.com/jirehcustodio" target="_blank" rel="noopener">
+        <img src="githublogo.png" alt="" class="rail-icon-img"/>
+        <span class="rail-label">GitHub</span>
+      </a>
+  <a class="rail-item" title="Facebook" aria-label="Facebook" href="https://www.facebook.com/jireh.custodio.5" target="_blank" rel="noopener">
+        <img src="facebooklogo.png" alt="" class="rail-icon-img"/>
+        <span class="rail-label">Facebook</span>
+      </a>
+  <a class="rail-item" title="Instagram" aria-label="Instagram" href="https://www.instagram.com/ji_cstd/" target="_blank" rel="noopener">
+        <span class="rail-icon">📷</span>
+        <span class="rail-label">Instagram</span>
+      </a>
+    </nav>
+  </aside>
+  <!-- Right Sidebar: Pet -->
+  <aside id="sidebar-right" class="sidebar-right" aria-label="Pet actions">
+    <nav class="side-rail">
+      <div id="pixel-pet" class="pixel-pet" role="button" aria-label="Pixel Pet" title="Pixel Pet — click to cheer!">
+        <span class="pet-emoji" aria-hidden="true">🐥</span>
+        <span class="lv-badge" aria-hidden="true">Lv1</span>
+      </div>
+      <!-- Actions/settings will mount below via JS when needed -->
+      <div id="pet-rail-mount"></div>
+    </nav>
+  </aside>
+  <footer class="main-footer">
+    <div class="footer-content">
+      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z &mdash; 2025</span>
+      <span class="footer-social">
+  <a href="https://www.instagram.com/ji_cstd/" target="_blank">Instagram</a> &bull; 
+        <a href="mailto:your@email.com">Email</a>
+      </span>
+    </div>
+  </footer>
+  <button id="global-contact-cta" class="sticky-cta" aria-label="Contact me">Contact</button>
+  <!-- Privacy Manager Modal -->
+  <div id="privacy-modal" class="cmdk-overlay" aria-hidden="true" style="display:none;">
+    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Manage my data" style="max-width:720px;">
+      <div class="cmdk-input-wrap">
+        <div style="font-weight:800;font-size:1.2rem;">Manage my data</div>
+        <button id="privacy-close" class="theme-toggle" style="margin-left:auto;">Close</button>
+      </div>
+      <div style="margin:0.6rem 0 0.8rem;opacity:0.8;">Only entries matching your current name are shown. Delete removes the record from the server CSV.</div>
+      <div id="privacy-list" class="cmdk-list" style="max-height:50vh;overflow:auto;"></div>
+      <div class="cmdk-hint">Tip: change the name above and open again to manage other entries you own.</div>
+    </div>
+  </div>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Jireh Custodio",
+    "jobTitle": "Engineer",
+    "description": "Engineer, Safety Officer 2, CCSA — AI + IoT with clean and fast UX",
+    "url": "https://example.com/",
+    "sameAs": [
+      "https://github.com/jirehcustodio",
+      "https://www.facebook.com/jireh.custodio.5",
+      "https://www.instagram.com/ji_cstd/"
+    ]
+  }
+  </script>
+  <!-- Command-K Quick Action Palette -->
+  <div id="cmdk" class="cmdk-overlay" aria-hidden="true" style="display:none;">
+    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Quick actions">
+      <div class="cmdk-input-wrap">
+        <input id="cmdk-input" class="cmdk-input" type="text" placeholder="Type a command… (e.g., coding, my info, github)" aria-label="Search commands" autocomplete="off"/>
+        <span class="cmdk-kbd">⌘K</span>
+      </div>
+      <ul id="cmdk-list" class="cmdk-list" role="listbox" aria-label="Results"></ul>
+      <div class="cmdk-hint">Arrow keys to navigate • Enter to run • Esc to close</div>
+    </div>
+  </div>
+  <script>
+    // If coming from a demo page, show portfolio directly
+    if (document.referrer && document.referrer.includes('demo-')) {
+      window.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('portfolio-box').style.display = 'block';
+  var sl = document.getElementById('sidebar-left');
+  if (sl) sl.style.display = 'block';
+  var sr = document.getElementById('sidebar-right');
+  if (sr) sr.style.display = 'block';
+        if (typeof setActiveTab === 'function') setActiveTab('home');
+        // Show splash once per session even on demo-referrer auto entry
+        if (!sessionStorage.getItem('splashSeen') && typeof showSplash === 'function') {
+          sessionStorage.setItem('splashSeen', 'true');
+          showSplash(900);
+        }
+      });
+    }
+  </script>
+  <script>
+    // Share Target router: if title/text/url present, forward to best demo
+    (function routeShareTarget(){
+      try {
+        const q = new URLSearchParams(location.search);
+        const title = q.get('title') || '';
+        const text = q.get('text') || '';
+        const url = q.get('url') || '';
+        if (!title && !text && !url) return;
+        // Heuristic: receipt-ish text -> Budget Buddy; otherwise Study Planner
+        const receiptLike = /total\s*[:=]?\s*\d|x\s*\d|qty|price|\$|php|store|receipt/i.test(text + ' ' + title);
+        const dest = receiptLike ? 'demo-budget-buddy.html' : 'demo-ai-study-planner.html';
+        const next = new URL(dest, location.href);
+        if (receiptLike) {
+          next.searchParams.set('text', (text || title || url || '').slice(0, 4000));
+        } else {
+          next.searchParams.set('text', (text || title || '').slice(0, 4000));
+        }
+        // Preserve safe mode in query
+        if (document.documentElement.classList.contains('safe-mode')) next.searchParams.set('safe','1');
+        location.replace(next.href);
+      } catch {}
+    })();
+  </script>
+  <script src="script.js"></script>
+  <script>
+    // Service Worker registration for PWA
+  if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+  <script>
+    // Lightweight front-end event and metrics fetch with mini sparklines + status dot
+    (function () {
+      const BASE = window.__BACKEND_URL || 'http://localhost:3001';
+      const statusDot = document.getElementById('metrics-status');
+      // Fire a pageview event (best-effort)
+      try { fetch(BASE + '/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'pageview', detail: { path: location.pathname } }) }).catch(()=>{}); } catch {}
+      // Render metrics if available
+      const box = document.getElementById('metrics');
+      if (!box) return;
+      const hist = { pageviews: [], analyzeRequests: [], analyzeSuccess: [], intakeSaved: [], events: [] };
+      const MAX_POINTS = 48;
+      const nowISO = () => new Date().toISOString();
+      function setStatus(color) {
+        if (!statusDot) return;
+        statusDot.style.background = color;
+      }
+      function uptimeFrom(iso) {
+        try {
+          const ms = Date.now() - new Date(iso).getTime();
+          if (!Number.isFinite(ms) || ms < 0) return '-';
+          const s = Math.floor(ms/1000);
+          const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+          if (d>0) return `${d}d ${h}h`;
+          if (h>0) return `${h}h ${m}m`;
+          return `${m}m`;
+        } catch { return '-'; }
+      }
+      function sparkline(values, color = '#7f5af0') {
+        const w = 100, h = 24, pad = 2;
+        const n = values.length;
+        if (!n) return '';
+        const min = Math.min(...values), max = Math.max(...values);
+        const range = (max - min) || 1;
+        const step = (w - pad*2) / Math.max(1, n-1);
+        let d = '';
+        for (let i=0;i<n;i++) {
+          const x = Math.round(pad + i*step);
+          const y = Math.round(h - pad - ((values[i] - min) / range) * (h - pad*2));
+          d += (i===0?`M${x},${y}`:` L${x},${y}`);
+        }
+        return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+      }
+      function pushHist(m) {
+        [['pageviews','#7f5af0'],['analyzeRequests','#2cb67d'],['analyzeSuccess','#2cb67d'],['intakeSaved','#414345'],['events','#ef4565']].forEach(([k]) => {
+          if (typeof m[k] === 'number') {
+            const arr = hist[k];
+            arr.push(m[k]);
+            if (arr.length > MAX_POINTS) arr.shift();
+          }
+        });
+      }
+      async function load() {
+        let ok = false;
+        try {
+          const r = await fetch(BASE + '/metrics', { cache: 'no-store' });
+          if (!r.ok) throw new Error('http '+r.status);
+          const m = await r.json();
+          ok = true;
+          pushHist(m);
+          box.innerHTML = '';
+          const entries = [
+            ['Uptime', uptimeFrom(m.since)],
+            ['Pageviews', m.pageviews, 'pageviews', '#7f5af0'],
+            ['Analyze req', m.analyzeRequests, 'analyzeRequests', '#2cb67d'],
+            ['Analyze ok', m.analyzeSuccess, 'analyzeSuccess', '#2cb67d'],
+            ['Intake saved', m.intakeSaved, 'intakeSaved', '#414345'],
+            ['Events', m.events, 'events', '#ef4565']
+          ];
+          entries.forEach(([k,v,key,color]) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.style.textAlign = 'center';
+            if (key) {
+              const svg = sparkline(hist[key], color);
+              card.innerHTML = `<div style="font-weight:800;font-size:1.2rem;">${v ?? '-'}</div><div style="opacity:0.7">${k}</div><div class="sparkline" style="margin-top:.35rem;opacity:.9">${svg}</div>`;
+            } else {
+              card.innerHTML = `<div style="font-weight:800;font-size:1.2rem;">${v ?? '-'}</div><div style="opacity:0.7">${k}</div>`;
+            }
+            box.appendChild(card);
+          });
+        } catch {}
+        setStatus(ok ? '#2cb67d' : '#ef4565');
+      }
+      load();
+      // Poll every 10s; quick warm-up after 2s to populate sparklines
+      setTimeout(load, 2000);
+      setInterval(load, 10000);
+    })();
+  </script>
+  <script>
+    // Minimalist logout button sliding effect
+    document.addEventListener('DOMContentLoaded', function() {
+      var logoutTab = document.querySelector('.logout-tab.minimalist');
+      var logoutLabel = document.querySelector('.logout-label');
+      if (logoutTab && logoutLabel) {
+        logoutTab.addEventListener('mouseenter', function() {
+          logoutLabel.style.opacity = '1';
+        });
+        logoutTab.addEventListener('mouseleave', function() {
+          logoutLabel.style.opacity = '0';
+        });
+      }
+    });
+  </script>
+  <script>
+    // Show sidebar after login
+    function showSidebar() {
+  var sidebar = document.getElementById('sidebar-left');
+  if (sidebar) sidebar.style.display = 'flex';
+  var sidebarR = document.getElementById('sidebar-right');
+  if (sidebarR) sidebarR.style.display = 'flex';
+    }
+    // Hide sidebar on logout
+    function hideSidebar() {
+  var sidebar = document.getElementById('sidebar-left');
+  if (sidebar) sidebar.style.display = 'none';
+  var sidebarR = document.getElementById('sidebar-right');
+  if (sidebarR) sidebarR.style.display = 'none';
+    }
+    // Hook into login/logout
+    window.addEventListener('DOMContentLoaded', function() {
+      if (document.getElementById('portfolio-box').style.display === 'block') {
+        showSidebar();
+      }
+    });
+    // If you have a login() and logout() function in script.js, call showSidebar/hideSidebar there as well
+  </script>
+  <script>
+    // Enable Enter key for login
+    window.addEventListener('DOMContentLoaded', function() {
+      const inputs = [
+        document.getElementById('first-name'),
+        document.getElementById('last-name'),
+        document.getElementById('age'),
+        document.getElementById('user-type'),
+        document.getElementById('school-name'),
+        document.getElementById('company-name'),
+      ].filter(Boolean);
+      const loginBtn = document.getElementById('login-btn');
+      function handleEnter(e) { if (e.key === 'Enter') { loginBtn.click(); } }
+      inputs.forEach(el => el && el.addEventListener('keydown', handleEnter));
+    });
+  </script>
+</body>
+</html>

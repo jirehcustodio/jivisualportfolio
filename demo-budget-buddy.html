@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budget Buddy Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .demo-header { font-size: 2rem; font-weight: 700; margin-bottom: 1.2rem; }
+    .demo-section { background: rgba(255,255,255,0.18); border-radius: 18px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 24px rgba(127,90,240,0.09); }
+  .demo-form { display: grid; gap: 1rem; max-width: 860px; margin: 1rem auto; }
+    .demo-form input[type="file"], .demo-form input[type="text"], .demo-form textarea, .demo-form select { font: inherit; padding: 0.7rem 0.9rem; border: 1px solid #e0e0e0; border-radius: 10px; background: #fff; }
+    .demo-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: center; }
+    .demo-btn { padding: 0.7rem 1.4rem; border-radius: 10px; background: linear-gradient(90deg, #7f5af0, #2cb67d); color: #fff; font-weight: 700; border: none; cursor: pointer; }
+    .demo-btn.secondary { background: #232526; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+    .demo-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(127,90,240,0.08); padding: 1rem; }
+    .mini { font-size: 0.92rem; color: #4a4a4a; }
+    canvas { width: 100%; height: 260px; }
+    .logo { align-items: center; gap: 0.6rem; display: inline-flex; }
+    .logo img { width: 32px; height: 32px; }
+  /* Items editor */
+  table.items { width: 100%; border-collapse: collapse; font-size: 0.96rem; }
+  table.items th, table.items td { border-bottom: 1px solid #eee; padding: 0.45rem 0.4rem; text-align: left; }
+  table.items th { font-weight: 800; color: #333; }
+  table.items input[type="number"] { width: 80px; }
+  table.items input[type="text"] { width: 100%; }
+  table.items select { padding: 0.35rem 0.5rem; }
+  .right { text-align: right; }
+  .dragzone { border: 2px dashed #cfd0ff; border-radius: 12px; padding: 0.8rem; background: #fafaff; text-align: center; color: #555; }
+  .dragzone.dragover { background: #f0efff; border-color: #7f5af0; color: #232526; }
+  .section-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+  </style>
+</head>
+<body>
+  <header class="main-header">
+    <div class="logo">
+      <img src="budget-buddy-logo.svg" alt="Budget Buddy" class="logo-img" />
+      <span class="logo-animated-text">Jireh's Safe Place</span>
+    </div>
+  </header>
+  <div class="container">
+    <div class="demo-section">
+      <div class="logo" style="margin-bottom:0.6rem;"><img src="budget-buddy-logo.svg" alt="Budget Buddy" /><strong>Budget Buddy</strong></div>
+      <div class="demo-header">Receipt OCR + Spend Tracker</div>
+      <p>Upload or paste a receipt, auto-extract line items, and visualize monthly spend. All in-browser. No server upload needed.</p>
+      <a href="index.html" class="demo-btn" style="margin-bottom:1rem;display:inline-block;">&#8592; Back to Home</a>
+      <form class="demo-form" onsubmit="return false;">
+        <label style="font-weight:600;">Upload receipt image (PNG/JPEG)</label>
+        <input id="file" type="file" accept="image/*" capture="environment" />
+        <div id="drop" class="dragzone">Drag & drop an image here</div>
+        <label style="font-weight:600;">Or paste text</label>
+        <textarea id="text" placeholder="Store ABC\n1x Coffee 3.50\n2x Bread 5.00\nTotal 8.50"></textarea>
+        <div class="demo-actions">
+          <button class="demo-btn" id="btn-ocr" type="button">Run OCR</button>
+          <button class="demo-btn secondary" id="btn-parse" type="button">Parse Text</button>
+          <button class="demo-btn" id="btn-clear" type="button">Clear</button>
+          <button class="demo-btn secondary" id="btn-sample" type="button">Load Sample</button>
+        </div>
+      </form>
+      <div class="demo-card" style="margin-top:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;flex-wrap:wrap;">
+          <strong>Items</strong>
+          <div class="section-actions">
+            <button class="demo-btn secondary" id="btn-add" type="button">Add Item</button>
+            <button class="demo-btn" id="btn-save-history" type="button">Save to History</button>
+          </div>
+        </div>
+        <div id="items" style="margin-top:0.6rem; overflow:auto;"></div>
+        <div id="totals" class="mini" style="margin-top:0.6rem;"></div>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-header">Monthly Overview</div>
+      <p class="mini">Quick look at spend categories this month.</p>
+      <div class="demo-card" style="padding:0.5rem 0.8rem;">
+        <canvas id="chart"></canvas>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="demo-header">Rules & History</div>
+      <div class="grid">
+        <div class="demo-card">
+          <strong>Category Rules</strong>
+          <p class="mini">Map keywords to categories (applies on parse and edits).</p>
+          <div style="display:grid;grid-template-columns:1.2fr 1fr auto;gap:0.5rem;align-items:center;">
+            <input id="rule-kw" type="text" placeholder="keyword (e.g., coffee)"/>
+            <select id="rule-cat">
+              <option>Groceries</option>
+              <option>Household</option>
+              <option>Dining</option>
+              <option>Transport</option>
+              <option>Other</option>
+            </select>
+            <button class="demo-btn" id="btn-add-rule" type="button">Add</button>
+          </div>
+          <div id="rules-list" class="mini" style="margin-top:0.6rem;"></div>
+        </div>
+        <div class="demo-card">
+          <strong>History</strong>
+          <div id="history" class="mini" style="margin-top:0.6rem;"></div>
+          <div class="section-actions" style="margin-top:0.6rem;">
+            <button class="demo-btn secondary" id="btn-export" type="button">Export CSV</button>
+            <label class="demo-btn" style="cursor:pointer;">
+              Import CSV
+              <input id="import-file" type="file" accept="text/csv" style="display:none;"/>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="main-footer">
+    <div class="footer-content">
+      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z &mdash; 2025</span>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    // ---- State & DOM ----
+    const itemsWrap = document.getElementById('items');
+    const totalsEl = document.getElementById('totals');
+    const textEl = document.getElementById('text');
+    const fileEl = document.getElementById('file');
+    const dropEl = document.getElementById('drop');
+    const rulesKey = 'bb:rules';
+    const histKey = 'bb:history';
+    let state = { items: [], total: 0 };
+
+    function loadRules() { try { return JSON.parse(localStorage.getItem(rulesKey) || '[]'); } catch { return []; } }
+    function saveRules(r) { try { localStorage.setItem(rulesKey, JSON.stringify(r)); } catch {} }
+    function loadHistory() { try { return JSON.parse(localStorage.getItem(histKey) || '[]'); } catch { return []; } }
+    function saveHistory(h) { try { localStorage.setItem(histKey, JSON.stringify(h)); } catch {} }
+
+    // ---- Parsing & Categorization ----
+    function categorize(name) {
+      const rules = loadRules();
+      const lower = String(name || '').toLowerCase();
+      for (const r of rules) {
+        if (lower.includes(String(r.kw || '').toLowerCase())) return r.cat || 'Other';
+      }
+      if (/bread|rice|coffee|milk|egg|meat|veg|fruit/i.test(name)) return 'Groceries';
+      if (/soap|shampoo|detergent|tissue|clean/i.test(name)) return 'Household';
+      if (/meal|dine|burger|pizza|cafe|restaurant/i.test(name)) return 'Dining';
+      if (/fare|bus|train|grab|taxi|fuel|gas/i.test(name)) return 'Transport';
+      return 'Other';
+    }
+
+    function parseLines(raw) {
+      const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      const items = [];
+      let total = 0;
+      for (const ln of lines) {
+        const m1 = ln.match(/^(?:([0-9]+)x\s*)?(.+?)\s+([0-9]+(?:\.[0-9]{1,2})?)$/i);
+        if (m1) {
+          const qty = parseInt(m1[1] || '1', 10);
+          const name = m1[2].trim();
+          const price = parseFloat(m1[3]);
+          if (!isNaN(price)) {
+            const sum = qty * price;
+            items.push({ name, qty, price, sum, category: categorize(name) });
+            total += sum;
+            continue;
+          }
+        }
+        const m2 = ln.match(/^total\s+([0-9]+(?:\.[0-9]{1,2})?)$/i);
+        if (m2) { total = parseFloat(m2[1]); }
+      }
+      return { items, total: Math.round(total*100)/100 };
+    }
+
+    // ---- Rendering ----
+    function recalc() {
+      state.items.forEach(it => it.sum = Math.round((it.qty * it.price) * 100)/100);
+      state.total = Math.round(state.items.reduce((a,b)=>a + (b.sum||0), 0) * 100)/100;
+      totalsEl.textContent = `Total: ${state.total.toFixed(2)}`;
+      updateChart(state.items);
+    }
+
+    function renderItemsTable() {
+      if (!state.items.length) { itemsWrap.textContent = 'No items yet.'; totalsEl.textContent=''; updateChart([]); return; }
+      const categories = ['Groceries','Household','Dining','Transport','Other'];
+      const rows = state.items.map((it, idx) => `
+        <tr>
+          <td><input type="number" min="1" step="1" value="${it.qty}" data-idx="${idx}" data-k="qty"></td>
+          <td><input type="text" value="${it.name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}" data-idx="${idx}" data-k="name"></td>
+          <td class="right"><input type="number" min="0" step="0.01" value="${it.price}" data-idx="${idx}" data-k="price"></td>
+          <td class="right">${(it.sum||0).toFixed(2)}</td>
+          <td>
+            <select data-idx="${idx}" data-k="category">
+              ${categories.map(c => `<option ${c===it.category?'selected':''}>${c}</option>`).join('')}
+            </select>
+          </td>
+          <td><button class="demo-btn secondary" data-action="del" data-idx="${idx}" type="button">Delete</button></td>
+        </tr>`).join('');
+      itemsWrap.innerHTML = `<div style="overflow:auto;">
+        <table class="items">
+          <thead><tr><th>Qty</th><th>Item</th><th class="right">Price</th><th class="right">Sum</th><th>Category</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+      itemsWrap.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', (e) => {
+          const idx = parseInt(el.getAttribute('data-idx'), 10);
+          const key = el.getAttribute('data-k');
+          if (key === 'qty') state.items[idx].qty = Math.max(1, parseInt(el.value || '1', 10) || 1);
+          else if (key === 'name') { state.items[idx].name = el.value; if (!state.items[idx].category || state.items[idx].category==='Other') state.items[idx].category = categorize(el.value); }
+          else if (key === 'price') state.items[idx].price = Math.max(0, parseFloat(el.value || '0') || 0);
+          else if (key === 'category') state.items[idx].category = el.value;
+          recalc();
+          renderItemsTable();
+        }, { passive: true });
+      });
+      itemsWrap.querySelectorAll('button[data-action="del"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-idx'), 10);
+          state.items.splice(idx, 1);
+          recalc();
+          renderItemsTable();
+        });
+      });
+      recalc();
+    }
+
+    // ---- OCR ----
+    async function ocrImage(file) {
+      const worker = await Tesseract.createWorker('eng');
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+      return data.text || '';
+    }
+
+    // ---- Chart ----
+    let chart;
+    function updateChart(items) {
+      const buckets = {};
+      for (const it of items) {
+        const key = it.category || categorize(it.name);
+        buckets[key] = (buckets[key] || 0) + (it.sum || 0);
+      }
+      const labels = Object.keys(buckets);
+      const data = Object.values(buckets);
+      const ctx = document.getElementById('chart');
+      if (!labels.length) { const g = ctx.getContext('2d'); g.clearRect(0,0,ctx.width,ctx.height); if (chart) { chart.destroy(); chart = null; } return; }
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: ['#7f5af0','#2cb67d','#ef4565','#ffd166','#00bcd4','#ff8a65'] }] },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    // ---- Rules UI ----
+    const rulesListEl = document.getElementById('rules-list');
+    function renderRules() {
+      const rules = loadRules();
+      if (!rules.length) { rulesListEl.textContent = 'No rules added.'; return; }
+      rulesListEl.innerHTML = rules.map((r,i)=>`<div style="display:flex;gap:0.5rem;align-items:center;justify-content:space-between;border:1px dashed #eee;padding:0.4rem 0.6rem;border-radius:8px;margin-bottom:0.4rem;"><span><strong>${r.kw}</strong> → ${r.cat}</span><button class="demo-btn secondary" data-del-rule="${i}" type="button">Remove</button></div>`).join('');
+      rulesListEl.querySelectorAll('button[data-del-rule]').forEach(btn => btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-del-rule'), 10);
+        const arr = loadRules(); arr.splice(idx, 1); saveRules(arr); renderRules();
+      }));
+    }
+
+    // ---- History UI ----
+    const histEl = document.getElementById('history');
+    function renderHistory() {
+      const hist = loadHistory();
+      if (!hist.length) { histEl.textContent = 'No entries yet.'; return; }
+      // Monthly summary
+      const now = new Date();
+      const ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+      const monthTotal = hist.filter(h => (h.ym || '').startsWith(ym)).reduce((a,b)=>a+(b.total||0),0);
+      const lines = [`<div><strong>${ym}</strong> total: <strong>${monthTotal.toFixed(2)}</strong></div>`];
+      hist.slice().reverse().forEach((h,idx) => {
+        lines.push(`<div style="display:flex;gap:0.5rem;align-items:center;justify-content:space-between;border:1px dashed #eee;padding:0.4rem 0.6rem;border-radius:8px;margin-top:0.4rem;">
+          <span>${new Date(h.ts).toLocaleString()} — <strong>${(h.total||0).toFixed(2)}</strong> (${h.items?.length||0} items)</span>
+          <span>
+            <button class="demo-btn secondary" data-load="${h.id}" type="button">Load</button>
+            <button class="demo-btn secondary" data-del="${h.id}" type="button">Delete</button>
+          </span>
+        </div>`);
+      });
+      histEl.innerHTML = lines.join('');
+      histEl.querySelectorAll('button[data-load]').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-load');
+        const hist = loadHistory();
+        const entry = hist.find(e => e.id === id);
+        if (!entry) return;
+        state = { items: entry.items.map(x=>({...x})), total: entry.total };
+        renderItemsTable();
+      }));
+      histEl.querySelectorAll('button[data-del]').forEach(btn => btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-del');
+        let hist = loadHistory();
+        hist = hist.filter(e => e.id !== id);
+        saveHistory(hist);
+        renderHistory();
+      }));
+    }
+
+    function saveCurrentToHistory() {
+      const entry = { id: 'id-' + Date.now(), ts: Date.now(), ym: new Date().toISOString().slice(0,7), items: state.items.map(x=>({...x})), total: state.total };
+      const hist = loadHistory();
+      hist.push(entry); saveHistory(hist); renderHistory();
+    }
+
+    // ---- CSV Export/Import ----
+    function exportCSV() {
+      const hist = loadHistory();
+      const rows = [['date','name','qty','price','sum','category']];
+      hist.forEach(e => {
+        const d = new Date(e.ts).toISOString();
+        (e.items||[]).forEach(it => rows.push([d, it.name, it.qty, it.price, it.sum, it.category]));
+      });
+      const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'budget-buddy.csv'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+    async function importCSV(file) {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      if (!lines.length) return;
+      const header = lines.shift();
+      const hist = loadHistory();
+      for (const line of lines) {
+        const cols = line.match(/((?:\"(?:[^\"]|\"\")*\")|[^,]+)/g) || [];
+        const [date,name,qty,price,sum,category] = cols.map(c => c.replace(/^\"|\"$/g,'').replace(/\"\"/g,'\"'));
+        const ts = Date.parse(date) || Date.now();
+        const item = { name, qty: parseInt(qty||'1',10)||1, price: parseFloat(price||'0')||0, sum: parseFloat(sum||'0')||0, category: category||'Other' };
+        // create one-entry-per-line for simplicity
+        hist.push({ id: 'imp-' + Math.random().toString(36).slice(2), ts, ym: new Date(ts).toISOString().slice(0,7), items: [item], total: item.sum });
+      }
+      saveHistory(hist); renderHistory();
+    }
+
+    // ---- Events ----
+    document.getElementById('btn-ocr').addEventListener('click', async () => {
+      if (!fileEl.files.length) { alert('Choose an image first.'); return; }
+      itemsWrap.textContent = 'Running OCR...';
+      try {
+        const text = await ocrImage(fileEl.files[0]);
+        textEl.value = text.trim();
+        const parsed = parseLines(textEl.value);
+        state = parsed; renderItemsTable();
+      } catch (e) {
+        itemsWrap.textContent = 'OCR failed.';
+      }
+    });
+    document.getElementById('btn-parse').addEventListener('click', () => {
+      const parsed = parseLines(textEl.value || '');
+      state = parsed; renderItemsTable();
+    });
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      textEl.value = '';
+      state = { items: [], total: 0 };
+      renderItemsTable();
+    });
+    document.getElementById('btn-sample').addEventListener('click', () => {
+      textEl.value = `Cafe Latte 3.50\n2x Bread 5.00\nSoap 2.40\nTotal 10.90`;
+      const parsed = parseLines(textEl.value);
+      state = parsed; renderItemsTable();
+    });
+    document.getElementById('btn-add').addEventListener('click', () => {
+      state.items.push({ qty:1, name:'', price:0, sum:0, category:'Other' });
+      renderItemsTable();
+    });
+    document.getElementById('btn-save-history').addEventListener('click', () => { if (!state.items.length) return; saveCurrentToHistory(); });
+    document.getElementById('btn-add-rule').addEventListener('click', () => {
+      const kw = (document.getElementById('rule-kw').value||'').trim();
+      const cat = document.getElementById('rule-cat').value;
+      if (!kw) return;
+      const r = loadRules(); r.push({ kw, cat }); saveRules(r); document.getElementById('rule-kw').value = ''; renderRules();
+    });
+    document.getElementById('btn-export').addEventListener('click', exportCSV);
+    document.getElementById('import-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) importCSV(f); e.target.value = ''; });
+
+    // Drag & Drop
+    ;['dragenter','dragover'].forEach(ev => dropEl.addEventListener(ev, (e) => { e.preventDefault(); dropEl.classList.add('dragover'); }));
+    ;['dragleave','drop'].forEach(ev => dropEl.addEventListener(ev, (e) => { e.preventDefault(); dropEl.classList.remove('dragover'); }));
+    dropEl.addEventListener('drop', async (e) => {
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) {
+        try {
+          itemsWrap.textContent = 'Running OCR...';
+          const text = await ocrImage(f);
+          textEl.value = text.trim();
+          const parsed = parseLines(textEl.value);
+          state = parsed; renderItemsTable();
+        } catch {
+          itemsWrap.textContent = 'OCR failed.';
+        }
+      }
+    });
+
+    // Initial renders
+    function parseDeepLink() {
+      try {
+        const q = new URLSearchParams(location.search);
+        const itemsQS = q.get('items');
+        const textQS = q.get('text') || q.get('share');
+        if (itemsQS) {
+          // items is base64(JSON)
+          const json = atob(itemsQS);
+          const data = JSON.parse(json);
+          if (Array.isArray(data)) {
+            state.items = data.map(x => ({ qty: Number(x.qty)||1, name: String(x.name||''), price: Number(x.price)||0, sum: 0, category: String(x.category||categorize(x.name||'')) }));
+            renderItemsTable();
+            return;
+          }
+        }
+        if (textQS) {
+          textEl.value = textQS;
+          const parsed = parseLines(textEl.value);
+          state = parsed; renderItemsTable();
+          return;
+        }
+      } catch {}
+    }
+    function ingestSharedFromManifest() {
+      try {
+        const q = new URLSearchParams(location.search);
+        const txt = q.get('text') || '';
+        if (txt && !textEl.value) {
+          textEl.value = txt;
+        }
+      } catch {}
+    }
+    renderRules();
+    renderHistory();
+    ingestSharedFromManifest();
+    parseDeepLink();
+    renderItemsTable();
+  </script>
+</body>
+</html>
