@@ -118,7 +118,6 @@ async function submitIntake() {
       const bases = [];
       if (meta) bases.push(meta.replace(/\/$/, ''));
       const origin = (window.location && window.location.origin) ? window.location.origin : '';
-      const isHttps = /^https:/i.test(origin);
       // Prefer same-origin function path in production
       if (origin && /^https?:/i.test(origin)) {
         // Map to functions mount
@@ -133,12 +132,10 @@ async function submitIntake() {
   }
   // Check server for existing profile (cross-device)
   async function checkExists(f, l) {
-  const tryOne = async (base) => {
+    const tryOne = async (base) => {
       try {
-    const clean = base.replace(/\/$/,'');
-    // Compatibility: allow calling the intake root with entries=1
-    bases.push(origin.replace(/\/$/, '') + '/.netlify/functions');
-    const u = `${clean}/profiles/exists?first=${encodeURIComponent(f)}&last=${encodeURIComponent(l)}`;
+        const clean = base.replace(/\/$/, '');
+        const u = `${clean}/profiles/exists?first=${encodeURIComponent(f)}&last=${encodeURIComponent(l)}`;
         const r = await fetch(u, { method: 'GET' });
         if (!r.ok) return null; return await r.json();
       } catch { return null; }
@@ -152,16 +149,10 @@ async function submitIntake() {
   // Try to send to backend CSV endpoint across bases. Consider non-2xx as failure.
   const post = async () => {
     for (const base of getResumeApiBases()) {
-      const clean = base.replace(/\/$/,'');
+      const clean = base.replace(/\/$/, '');
       const url = `${clean}/intake`;
-      const urlCompat = `${clean}/intake`; // same path; server handles POST at /intake
       try {
-        let res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (!res.ok && clean.includes('/.netlify/functions')) {
-          // Try explicit full path to function as a fallback
-          const u2 = clean + '/intake';
-          res = await fetch(u2, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        }
+        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true });
         if (res.ok) return true;
       } catch (_) {}
     }
@@ -203,6 +194,7 @@ async function submitIntake() {
   try { window.dispatchEvent(new CustomEvent('profile:changed', { detail: { name: fullName, key }, bubbles: false })); } catch {}
   } catch {}
   showIntakeSummary({ ...payload, __saved: saved });
+  try { sessionStorage.setItem('login:sent', '1'); } catch {}
   const loginBox = document.getElementById('login-box');
   if (loginBox) loginBox.style.display = 'none';
   if (!sessionStorage.getItem('splashSeen')) {
@@ -326,6 +318,41 @@ window.addEventListener('online', () => { flushIntakeQueue(); });
 // On load: try to flush any queued intakes
 window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { flushIntakeQueue(); }, 0); });
 
+// ---- Lightweight server event logger (for login events etc.) ----
+function getApiBasesForNetlify() {
+  try {
+    const meta = document.querySelector('meta[name="resume-api"]')?.content?.trim();
+    const bases = [];
+    if (meta) bases.push(meta.replace(/\/$/, ''));
+    const origin = (window.location && window.location.origin) ? window.location.origin : '';
+    if (origin && /^https?:/i.test(origin)) {
+      bases.push(origin.replace(/\/$/, '') + '/.netlify/functions');
+      bases.push(origin.replace(/\/$/, '') + '/api');
+      bases.push(origin.replace(/\/$/, ''));
+    }
+    bases.push('http://localhost:3001', 'http://localhost:3002');
+    return Array.from(new Set(bases));
+  } catch { return ['http://localhost:3001', 'http://localhost:3002']; }
+}
+async function postIntakeEventOncePerSession(eventPayload) {
+  try {
+    if (sessionStorage.getItem('login:sent') === '1') return false;
+  } catch {}
+  const payload = { ...eventPayload, _event: eventPayload?.type || 'event' };
+  for (const base of getApiBasesForNetlify()) {
+    const clean = base.replace(/\/$/, '');
+    const url = `${clean}/intake`;
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), keepalive: true });
+      if (res.ok) {
+        try { sessionStorage.setItem('login:sent', '1'); } catch {}
+        return true;
+      }
+    } catch {}
+  }
+  return false;
+}
+
 // Real logout: clear session state and return to login screen
 // Default delay for logout overlay (can be overridden via #logout-overlay[data-delay])
 const DEFAULT_LOGOUT_DELAY = 1500;
@@ -438,6 +465,17 @@ function resetIntakeForm() {
     } else {
       after();
     }
+    // Fire a lightweight login event once per session for server-side visibility
+    try {
+      if (sessionStorage.getItem('login:sent') !== '1') {
+        const fullName = (localStorage.getItem('profile:currentName') || '').trim();
+        if (fullName) {
+          const [first, ...rest] = fullName.split(/\s+/);
+          const last = rest.join(' ');
+          postIntakeEventOncePerSession({ type: 'login', first, last });
+        }
+      }
+    } catch {}
   } else {
     // Not logged in: show the intake/login first and keep the portfolio hidden
     const sidebar = document.getElementById('sidebar-left');
