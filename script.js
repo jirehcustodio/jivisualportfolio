@@ -428,10 +428,11 @@ function resetIntakeForm() {
       after();
     }
   } else {
+    // Not logged in: show the intake/login first and keep the portfolio hidden
     const sidebar = document.getElementById('sidebar-left');
     if (sidebar) sidebar.style.display = 'none';
-  const sidebarR = document.getElementById('sidebar-right');
-  if (sidebarR) sidebarR.style.display = 'none';
+    const sidebarR = document.getElementById('sidebar-right');
+    if (sidebarR) sidebarR.style.display = 'none';
     const logoutTabBtn = document.querySelector('.logout-tab-btn');
     if (logoutTabBtn) {
       logoutTabBtn.classList.remove('show');
@@ -439,14 +440,15 @@ function resetIntakeForm() {
     }
     const logo = document.getElementById('header-logo');
     if (logo) logo.style.display = 'block';
+    const loginBox = document.getElementById('login-box');
+    if (loginBox) { loginBox.style.display = 'block'; loginBox.removeAttribute('aria-hidden'); }
+    const portfolio = document.getElementById('portfolio-box');
+    if (portfolio) portfolio.style.display = 'none';
 
-    // Also play the splash once for first-time visitors, then reveal portfolio so content shows
-    const after = () => revealPortfolio();
+    // Optionally play the splash once; after splash, remain on the intake screen
     if (!sessionStorage.getItem('splashSeen')) {
       sessionStorage.setItem('splashSeen', 'true');
-      showSplash(900).then(after);
-    } else {
-      after();
+      showSplash(900);
     }
   }
 
