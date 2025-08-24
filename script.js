@@ -605,8 +605,22 @@ function resetIntakeForm() {
       if (devLinks) devLinks.style.display = on ? 'block' : 'none';
       document.documentElement.classList.toggle('dev-mode', on);
     }
-  function open(){ if (modal) { modal.style.display = 'block'; modal.removeAttribute('aria-hidden'); } }
-  function close(){ if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden','true'); } }
+    function open(){
+      if (modal) {
+        modal.style.display = 'block';
+        modal.removeAttribute('aria-hidden');
+        // allow CSS transition to run
+        requestAnimationFrame(() => modal.classList.add('show'));
+      }
+    }
+    function close(){
+      if (modal) {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden','true');
+        // hide after transition
+        setTimeout(() => { try { modal.style.display = 'none'; } catch {} }, 180);
+      }
+    }
 
   if (openBtn && !openBtn.__wired){ openBtn.__wired = true; openBtn.addEventListener('click', open); }
   if (openBtnRight && !openBtnRight.__wired){ openBtnRight.__wired = true; openBtnRight.addEventListener('click', open); }
