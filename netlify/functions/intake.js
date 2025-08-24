@@ -47,18 +47,20 @@ exports.handler = async function(event, context) {
 
   if (method === 'GET') {
     if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
-      // Admin-only: require x-admin-key header (or ?key= / ?admin_key= fallback)
-  const headers = event.headers || {};
-  const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key) || (event.queryStringParameters?.k);
-  const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '08/07/2003').trim();
-  // Normalize both sides (strip separators, case-insensitive)
-  if (!ADMIN_KEY || normalize(provided) !== normalize(ADMIN_KEY)) {
-        return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
-      }
+      // Public: list entries, newest first; supports optional limit and since filters
       try {
-        const entries = (await store.get(KEY, { type: 'json' })) || [];
+        let entries = (await store.get(KEY, { type: 'json' })) || [];
         // newest first
         entries.sort((a,b) => (b.ts||0) - (a.ts||0));
+        const qs = event.queryStringParameters || {};
+        const since = parseInt(qs.since || '', 10);
+        if (!Number.isNaN(since) && since > 0) {
+          entries = entries.filter(e => (e.ts || 0) >= since);
+        }
+        const limit = parseInt(qs.limit || '', 10);
+        if (!Number.isNaN(limit) && limit > 0) {
+          entries = entries.slice(0, limit);
+        }
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ entries }) };
       } catch (e) {
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ entries: [] }) };

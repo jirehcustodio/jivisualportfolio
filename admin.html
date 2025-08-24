@@ -22,11 +22,16 @@
 <body>
   <div class="admin-wrap">
     <h2 class="hero-title" style="margin:0 0 .6rem">Admin Intake Viewer</h2>
-    <p class="muted">Enter the admin key to view and manage intake submissions.</p>
-    <div class="admin-head">
-      <input id="key" class="admin-input" type="password" placeholder="Admin key" aria-label="Admin key" />
-      <button id="load" class="admin-btn" style="display:none">Load Entries</button>
-      <button id="remember" class="theme-toggle" style="margin-left:auto">Remember on this device</button>
+    <p class="muted">Recent intake activity</p>
+    <div class="admin-head" style="gap:1rem;">
+      <label class="muted" for="limit">Show</label>
+      <select id="limit" class="admin-input" style="width:auto">
+        <option value="10">10</option>
+        <option value="25" selected>25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+      </select>
+      <button id="load" class="admin-btn">Refresh</button>
     </div>
     <div id="out" class="card" style="padding:0">
       <table aria-label="Intake entries">
@@ -41,16 +46,15 @@
   const fmt = (ts)=> new Date(ts).toLocaleString();
   const rows = document.getElementById('rows');
   async function load() {
-      const key = document.getElementById('key').value.trim();
+      const limitSel = document.getElementById('limit');
+      const limit = parseInt(limitSel?.value || '25', 10) || 25;
       rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
       try {
-        // Pass key via header and query param as a fallback
-  const u = new URL('/api/intake/entries', location.origin);
-  u.searchParams.set('key', key);
-  // Also send a compact alias to cover normalization differences
-  u.searchParams.set('k', key.replace(/[^a-z0-9]/gi, '').toLowerCase());
-  const r = await fetch(u.toString(), { headers: { 'x-admin-key': key } });
-        if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Access denied</td></tr>'; return; }
+        // Public endpoint now; request recent entries
+        const u = new URL('/api/intake/entries', location.origin);
+        if (limit) u.searchParams.set('limit', String(limit));
+        const r = await fetch(u.toString());
+        if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>'; return; }
         const j = await r.json();
         const list = Array.isArray(j.entries) ? j.entries : [];
         if (!list.length) { rows.innerHTML = '<tr><td class="muted" colspan="7">No entries yet</td></tr>'; return; }
@@ -66,40 +70,19 @@
         rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>';
       }
     }
-    // Keep for manual fallback; hidden by default
-    document.getElementById('load').addEventListener('click', load);
-    document.getElementById('remember').addEventListener('click', ()=>{
-      const val = document.getElementById('key').value.trim();
-      if (!val) return alert('Enter a key first.');
-      try { localStorage.setItem('admin:key', val); alert('Saved on this device.'); } catch {}
-    });
-    // Prefill if saved locally; otherwise prompt once; block access on cancel
-    try {
-      const saved = localStorage.getItem('admin:key');
-      if (saved) {
-        document.getElementById('key').value = saved;
-        load();
-      } else {
-        const entered = prompt('Enter Admin Key to view intake entries:');
-        if (entered && entered.trim()) {
-          const v = entered.trim();
-          document.getElementById('key').value = v;
-          try { localStorage.setItem('admin:key', v); } catch {}
-          load();
-        } else {
-          // No key: bounce back to home for safety
-          try { window.location.replace('index.html'); } catch { rows.innerHTML = '<tr><td class="muted" colspan="7">Admin key required.</td></tr>'; }
-        }
-      }
-    } catch {}
+  document.getElementById('load').addEventListener('click', load);
+  // Auto-load on mount
+  load();
     rows.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-ts]');
       if (!btn) return;
-      const key = document.getElementById('key').value.trim();
       const ts = btn.getAttribute('data-ts');
       if (!confirm('Delete this entry?')) return;
   const u = new URL('/api/intake', location.origin);
       u.searchParams.set('ts', ts);
+  // Public list; but delete still requires admin key — prompt inline
+  const key = prompt('Enter admin key to delete:');
+  if (!key) return;
   u.searchParams.set('key', key);
   u.searchParams.set('k', key.replace(/[^a-z0-9]/gi, '').toLowerCase());
   const r = await fetch(u.toString(), { method: 'DELETE', headers: { 'x-admin-key': key } });
