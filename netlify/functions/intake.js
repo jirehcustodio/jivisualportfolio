@@ -4,7 +4,13 @@
 // - GET    /api/intake/entries        -> list all persisted entries
 // - DELETE /api/intake?ts=...         -> delete by timestamp (best-effort)
 
-const { getStore } = require('@netlify/blobs');
+let getStore;
+let blobsOk = true;
+try {
+  ({ getStore } = require('@netlify/blobs'));
+} catch (e) {
+  blobsOk = false;
+}
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -19,7 +25,7 @@ exports.handler = async function(event, context) {
   if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
 
   // Blobs store for this site; key 'entries.json' holds an array of records
-  const store = getStore('intake');
+  const store = blobsOk ? getStore('intake') : null;
   const KEY = 'entries.json';
 
   if (method === 'POST') {
@@ -32,6 +38,9 @@ exports.handler = async function(event, context) {
     const ua = (event.headers?.['user-agent']) || '';
     const ip = event.headers?.['x-nf-client-connection-ip'] || event.headers?.['client-ip'] || (event.headers?.['x-forwarded-for']?.split(',')[0] || '');
     const rec = { ...body, ts, ua, ip };
+    if (!store) {
+      return { statusCode: 503, headers: CORS, body: JSON.stringify({ ok: false, error: 'Storage not configured (missing @netlify/blobs). Please set Functions directory and install deps.' }) };
+    }
     try {
       const existing = (await store.get(KEY, { type: 'json' })) || [];
       existing.push(rec);
@@ -49,6 +58,7 @@ exports.handler = async function(event, context) {
   if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries') || (path.endsWith('/intake') && ((event.queryStringParameters?.list === '1') || (event.queryStringParameters?.entries === '1')))) {
       // Public: list entries, newest first; supports optional limit and since filters
       try {
+        if (!store) return { statusCode: 200, headers: CORS, body: JSON.stringify({ entries: [], note: 'Storage not configured on server.' }) };
         let entries = (await store.get(KEY, { type: 'json' })) || [];
         // newest first
         entries.sort((a,b) => (b.ts||0) - (a.ts||0));

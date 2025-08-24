@@ -136,6 +136,8 @@ async function submitIntake() {
   const tryOne = async (base) => {
       try {
     const clean = base.replace(/\/$/,'');
+    // Compatibility: allow calling the intake root with entries=1
+    bases.push(origin.replace(/\/$/, '') + '/.netlify/functions');
     const u = `${clean}/profiles/exists?first=${encodeURIComponent(f)}&last=${encodeURIComponent(l)}`;
         const r = await fetch(u, { method: 'GET' });
         if (!r.ok) return null; return await r.json();
@@ -150,9 +152,16 @@ async function submitIntake() {
   // Try to send to backend CSV endpoint across bases. Consider non-2xx as failure.
   const post = async () => {
     for (const base of getResumeApiBases()) {
-      const url = `${base.replace(/\/$/,'')}/intake`;
+      const clean = base.replace(/\/$/,'');
+      const url = `${clean}/intake`;
+      const urlCompat = `${clean}/intake`; // same path; server handles POST at /intake
       try {
-        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        let res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!res.ok && clean.includes('/.netlify/functions')) {
+          // Try explicit full path to function as a fallback
+          const u2 = clean + '/intake';
+          res = await fetch(u2, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        }
         if (res.ok) return true;
       } catch (_) {}
     }
