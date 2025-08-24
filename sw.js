@@ -1,4 +1,4 @@
-const CACHE = 'portfolio-v13';
+const CACHE = 'portfolio-v15';
 const CORE = [
   './index.html',
   './style.css',

@@ -22,8 +22,8 @@ function updateLoaderBgFromGif() {
   try {
     const loader = document.getElementById('login-loading');
     if (!loader) return;
-  // Respect a locked background set via data-lock-bg
-  if (loader.hasAttribute('data-lock-bg')) return;
+    // Respect a locked background set via data-lock-bg
+    if (loader.hasAttribute('data-lock-bg')) return;
     const img = loader.querySelector('img.loading-screen');
     if (!img) return;
     const apply = () => {
@@ -35,42 +35,28 @@ function updateLoaderBgFromGif() {
         const ctx = c.getContext('2d', { willReadFrequently: true });
         c.width = w; c.height = h;
         ctx.drawImage(img, 0, 0);
-        const sample = (x, y) => ctx.getImageData(Math.max(0, Math.min(w-1, x)), Math.max(0, Math.min(h-1, y)), 1, 1).data;
+        const sample = (x, y) => ctx.getImageData(Math.max(0, Math.min(w - 1, x)), Math.max(0, Math.min(h - 1, y)), 1, 1).data;
         const pts = [ [1,1], [w-2,1], [1,h-2], [w-2,h-2], [Math.floor(w/2), Math.floor(h/2)] ];
         const colors = pts.map(([x,y]) => sample(x,y)).filter(d => d[3] > 0);
         let best = null; const buckets = {};
-        const key = (r,g,b) => `${Math.round(r/16)*16},${Math.round(g/16)*16},${Math.round(b/16)*16}`;
+        const bucketKey = (r,g,b) => `${Math.round(r/16)*16},${Math.round(g/16)*16},${Math.round(b/16)*16}`;
         for (const d of colors) {
-          const k = key(d[0], d[1], d[2]);
+          const k = bucketKey(d[0], d[1], d[2]);
           buckets[k] = (buckets[k] || 0) + 1;
           if (!best || buckets[k] > buckets[best]) best = k;
         }
-        if (!best) {
-          c.width = 1; c.height = 1; ctx.drawImage(img, 0, 0, 1, 1);
-          const d = ctx.getImageData(0,0,1,1).data; best = `${d[0]},${d[1]},${d[2]}`;
+        if (best) {
+          const [r, g, b] = best.split(',').map(n => parseInt(n, 10) || 0);
+          // Slightly translucent to blend nicely
+          loader.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.85)`;
         }
-        loader.style.setProperty('--loading-bg', `rgb(${best})`);
       } catch {}
     };
     if (img.complete) apply(); else img.addEventListener('load', apply, { once: true });
   } catch {}
 }
-
-// Run early to set loader background
-try { window.addEventListener('DOMContentLoaded', () => { updateLoaderBgFromGif(); }); } catch {}
-function login() {
-  // Deprecated: kept for backward compatibility if called elsewhere
-  const username = '';
-  const password = '';
-  const error = document.getElementById('login-error');
-  // Simple demo: username 'genz', password 'portfolio'
-  const loader = document.getElementById('login-loading');
-  if (loader) loader.style.display = 'flex';
-  // Small delay to show loader
-  setTimeout(() => {
-    if (loader) loader.style.display = 'none';
-  }, 300);
-}
+// Apply once DOM is ready
+window.addEventListener('DOMContentLoaded', updateLoaderBgFromGif);
 
 // New Intake Flow
 async function submitIntake() {
@@ -652,10 +638,17 @@ function resetIntakeForm() {
             let saved = '';
             try { saved = localStorage.getItem('admin:key') || ''; } catch {}
             const input = window.prompt('Enter your Admin Key to view intake entries:', saved);
-            if (input !== null) {
-              const key = String(input).trim();
-              if (key) { try { localStorage.setItem('admin:key', key); } catch {} }
+            const key = (input ?? '').toString().trim();
+            if (!key) {
+              // No key entered: keep modal open and show a tiny toast
+              try {
+                const t = document.createElement('div'); t.className = 'toast'; t.textContent = 'Admin key required.'; document.body.appendChild(t);
+                requestAnimationFrame(() => t.classList.add('show'));
+                setTimeout(() => { t.classList.remove('show'); setTimeout(() => { try { t.remove(); } catch {} }, 260); }, 1600);
+              } catch {}
+              return;
             }
+            try { localStorage.setItem('admin:key', key); } catch {}
             // Close the settings modal for a cleaner transition
             close();
             // Open admin viewer in a new tab to allow returning easily

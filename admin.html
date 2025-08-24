@@ -25,7 +25,7 @@
     <p class="muted">Enter the admin key to view and manage intake submissions.</p>
     <div class="admin-head">
       <input id="key" class="admin-input" type="password" placeholder="Admin key" aria-label="Admin key" />
-      <button id="load" class="admin-btn">Load Entries</button>
+      <button id="load" class="admin-btn" style="display:none">Load Entries</button>
       <button id="remember" class="theme-toggle" style="margin-left:auto">Remember on this device</button>
     </div>
     <div id="out" class="card" style="padding:0">
@@ -38,9 +38,9 @@
     </div>
   </div>
   <script>
-    const fmt = (ts)=> new Date(ts).toLocaleString();
-    const rows = document.getElementById('rows');
-    async function load() {
+  const fmt = (ts)=> new Date(ts).toLocaleString();
+  const rows = document.getElementById('rows');
+  async function load() {
       const key = document.getElementById('key').value.trim();
       rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
       try {
@@ -55,29 +55,51 @@
         rows.innerHTML = '';
         list.forEach(e => {
           const tr = document.createElement('tr');
-          const schoolOrCompany = e.userType === 'student' ? (e.schoolName||'') : (e.companyName||'');
-          tr.innerHTML = `<td>${fmt(e.ts||Date.now())}</td><td>${(e.first||'')+' '+(e.last||'')}</td><td>${e.userType||''}</td><td>${e.age||''}</td><td>${schoolOrCompany}</td><td class="muted">${e.ip||''}</td><td><button data-ts="${e.ts}" class="admin-btn" style="padding:.3rem .6rem">Delete</button></td>`;
+          const userType = e.type || e.userType || '';
+          const schoolOrCompany = userType === 'student' ? (e.school || e.schoolName || '') : (e.company || e.companyName || '');
+          tr.innerHTML = `<td>${fmt(e.ts||Date.now())}</td><td>${(e.first||'')+' '+(e.last||'')}</td><td>${userType}</td><td>${e.age||''}</td><td>${schoolOrCompany}</td><td class="muted">${e.ip||''}</td><td><button data-ts="${e.ts}" class="admin-btn" style="padding:.3rem .6rem">Delete</button></td>`;
           rows.appendChild(tr);
         });
       } catch (e) {
         rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>';
       }
     }
+    // Keep for manual fallback; hidden by default
     document.getElementById('load').addEventListener('click', load);
     document.getElementById('remember').addEventListener('click', ()=>{
       const val = document.getElementById('key').value.trim();
       if (!val) return alert('Enter a key first.');
       try { localStorage.setItem('admin:key', val); alert('Saved on this device.'); } catch {}
     });
-    // Prefill if saved locally
-    try { const saved = localStorage.getItem('admin:key'); if (saved) document.getElementById('key').value = saved; } catch {}
+    // Prefill if saved locally; otherwise prompt once; block access on cancel
+    try {
+      const saved = localStorage.getItem('admin:key');
+      if (saved) {
+        document.getElementById('key').value = saved;
+        load();
+      } else {
+        const entered = prompt('Enter Admin Key to view intake entries:');
+        if (entered && entered.trim()) {
+          const v = entered.trim();
+          document.getElementById('key').value = v;
+          try { localStorage.setItem('admin:key', v); } catch {}
+          load();
+        } else {
+          // No key: bounce back to home for safety
+          try { window.location.replace('index.html'); } catch { rows.innerHTML = '<tr><td class="muted" colspan="7">Admin key required.</td></tr>'; }
+        }
+      }
+    } catch {}
     rows.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-ts]');
       if (!btn) return;
       const key = document.getElementById('key').value.trim();
       const ts = btn.getAttribute('data-ts');
       if (!confirm('Delete this entry?')) return;
-      const r = await fetch('/api/intake?ts='+encodeURIComponent(ts), { method: 'DELETE', headers: { 'x-admin-key': key } });
+      const u = new URL('/api/intake', location.origin);
+      u.searchParams.set('ts', ts);
+      u.searchParams.set('key', key);
+      const r = await fetch(u.toString(), { method: 'DELETE', headers: { 'x-admin-key': key } });
       if (r.ok) load();
     });
   </script>
