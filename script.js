@@ -354,12 +354,13 @@ function logout() {
   // Show logout overlay immediately
   const overlay = document.getElementById('logout-overlay');
   if (overlay) { overlay.style.display = 'grid'; overlay.removeAttribute('aria-hidden'); }
+  // Immediately clear auth/session flags so a quick reload won't restore the session
+  try { sessionStorage.removeItem('portfolioLoggedIn'); } catch {}
+  try { localStorage.removeItem('portfolioLoggedIn'); } catch {}
+  try { sessionStorage.removeItem('splashSeen'); } catch {}
   // Give the GIF time to show before clearing UI (adjust delay as desired)
   const delay = getLogoutDelay();
   setTimeout(() => {
-  try { sessionStorage.removeItem('portfolioLoggedIn'); } catch {}
-  try { localStorage.removeItem('portfolioLoggedIn'); } catch {}
-    try { sessionStorage.removeItem('splashSeen'); } catch {}
     // Ensure any loading overlay is hidden
     const loader = document.getElementById('login-loading');
     if (loader) loader.style.display = 'none';

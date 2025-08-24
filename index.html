@@ -639,18 +639,32 @@
     // If coming from a demo page, show portfolio directly
     if (document.referrer && document.referrer.includes('demo-')) {
       window.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('login-box').style.display = 'none';
-        document.getElementById('portfolio-box').style.display = 'block';
-  var sl = document.getElementById('sidebar-left');
-  if (sl) sl.style.display = 'block';
-  var sr = document.getElementById('sidebar-right');
-  if (sr) sr.style.display = 'block';
-        if (typeof setActiveTab === 'function') setActiveTab('home');
-        // Show splash once per session even on demo-referrer auto entry
-        if (!sessionStorage.getItem('splashSeen') && typeof showSplash === 'function') {
-          sessionStorage.setItem('splashSeen', 'true');
-          showSplash(900);
-        }
+        try {
+          if (sessionStorage.getItem('portfolioLoggedIn') === 'true') {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('portfolio-box').style.display = 'block';
+            var sl = document.getElementById('sidebar-left');
+            if (sl) sl.style.display = 'block';
+            var sr = document.getElementById('sidebar-right');
+            if (sr) sr.style.display = 'block';
+            if (typeof setActiveTab === 'function') setActiveTab('home');
+            // Show splash once per session even on demo-referrer auto entry
+            if (!sessionStorage.getItem('splashSeen') && typeof showSplash === 'function') {
+              sessionStorage.setItem('splashSeen', 'true');
+              showSplash(900);
+            }
+          } else {
+            // Respect logout or fresh session: keep intake visible
+            var lb = document.getElementById('login-box');
+            if (lb) lb.style.display = 'block';
+            var pb = document.getElementById('portfolio-box');
+            if (pb) pb.style.display = 'none';
+            var sl = document.getElementById('sidebar-left');
+            if (sl) sl.style.display = 'none';
+            var sr = document.getElementById('sidebar-right');
+            if (sr) sr.style.display = 'none';
+          }
+        } catch (e) {}
       });
     }
   </script>
@@ -832,6 +846,20 @@
       const loginBtn = document.getElementById('login-btn');
       function handleEnter(e) { if (e.key === 'Enter') { loginBtn.click(); } }
       inputs.forEach(el => el && el.addEventListener('keydown', handleEnter));
+    });
+  </script>
+  <script>
+    // Defensive guard: if not logged in this session, keep intake visible after load
+    window.addEventListener('DOMContentLoaded', function() {
+      try {
+        const loggedIn = sessionStorage.getItem('portfolioLoggedIn') === 'true';
+        if (!loggedIn) {
+          var lb = document.getElementById('login-box'); if (lb) lb.style.display = 'block';
+          var pb = document.getElementById('portfolio-box'); if (pb) pb.style.display = 'none';
+          var sl = document.getElementById('sidebar-left'); if (sl) sl.style.display = 'none';
+          var sr = document.getElementById('sidebar-right'); if (sr) sr.style.display = 'none';
+        }
+      } catch {}
     });
   </script>
 </body>
