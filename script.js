@@ -195,6 +195,8 @@ async function submitIntake() {
   } catch {}
   showIntakeSummary({ ...payload, __saved: saved });
   try { sessionStorage.setItem('login:sent', '1'); } catch {}
+  // Increment entries counter for this profile on the server
+  try { if (payload.first && payload.last) upsertProfile({ first: payload.first, last: payload.last, incEntries: true, incLogin: false }); } catch {}
   const loginBox = document.getElementById('login-box');
   if (loginBox) loginBox.style.display = 'none';
   if (!sessionStorage.getItem('splashSeen')) {
@@ -353,6 +355,20 @@ async function postIntakeEventOncePerSession(eventPayload) {
   return false;
 }
 
+async function upsertProfile({ first, last, incLogin = false, incEntries = false, data = null }) {
+  const body = { first, last, incLogin, incEntries };
+  if (data && typeof data === 'object') body.data = data;
+  for (const base of getApiBasesForNetlify()) {
+    const clean = base.replace(/\/$/, '');
+    const url = `${clean}/profiles/upsert`;
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), keepalive: true });
+      if (res.ok) return true;
+    } catch {}
+  }
+  return false;
+}
+
 // Real logout: clear session state and return to login screen
 // Default delay for logout overlay (can be overridden via #logout-overlay[data-delay])
 const DEFAULT_LOGOUT_DELAY = 1500;
@@ -472,7 +488,9 @@ function resetIntakeForm() {
         if (fullName) {
           const [first, ...rest] = fullName.split(/\s+/);
           const last = rest.join(' ');
+          // Send intake login event and upsert profile
           postIntakeEventOncePerSession({ type: 'login', first, last });
+          upsertProfile({ first, last, incLogin: true });
         }
       }
     } catch {}

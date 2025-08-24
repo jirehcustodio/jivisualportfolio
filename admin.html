@@ -22,7 +22,15 @@
 <body>
   <div class="admin-wrap">
     <h2 class="hero-title" style="margin:0 0 .6rem">Admin Intake Viewer</h2>
-    <p class="muted">Recent intake activity</p>
+    <p class="muted">Recent intake activity and profiles</p>
+    <div class="card" style="margin:.8rem 0;padding:0.6rem 0.8rem">
+      <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+        <strong>Profiles</strong>
+        <button id="reload-profiles" class="admin-btn" style="padding:.3rem .6rem">Refresh</button>
+        <span class="muted" id="profiles-count" aria-live="polite"></span>
+      </div>
+      <div id="profiles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem;margin-top:.6rem"></div>
+    </div>
     <div class="admin-head" style="gap:1rem;">
       <label class="muted" for="limit">Show</label>
       <select id="limit" class="admin-input" style="width:auto">
@@ -43,6 +51,80 @@
     </div>
   </div>
   <script>
+  async function fetchProfiles(limit) {
+    const paths = [
+      '/api/profiles/list',
+      '/.netlify/functions/profiles/list',
+      '/.netlify/functions/profiles'
+    ];
+    let lastError = null, lastStatus = 0;
+    for (const p of paths) {
+      try {
+        const u = new URL(p, location.origin);
+        if (limit) u.searchParams.set('limit', String(limit));
+        const r = await fetch(u.toString());
+        if (r.ok) return await r.json();
+        lastStatus = r.status;
+      } catch (e) { lastError = e; }
+    }
+    const errMsg = lastStatus ? `HTTP ${lastStatus}` : (lastError?.message || 'Network error');
+    throw new Error(errMsg);
+  }
+  function renderProfiles(list) {
+    const grid = document.getElementById('profiles');
+    const countEl = document.getElementById('profiles-count');
+    if (!grid) return;
+    if (!Array.isArray(list) || list.length === 0) {
+      grid.innerHTML = '<div class="muted">No profiles yet</div>';
+      if (countEl) countEl.textContent = '';
+      return;
+    }
+    grid.innerHTML = '';
+    list.forEach(p => {
+      const card = document.createElement('button');
+      card.className = 'panel-tile';
+      card.style.textAlign = 'left';
+      card.style.padding = '.6rem .7rem';
+      card.setAttribute('data-key', p.key);
+      card.innerHTML = `<div style="font-weight:700">${(p.first||'')+' '+(p.last||'')}</div>
+        <div class="muted" style="font-size:.85rem">Last seen: ${p.lastSeen ? fmt(p.lastSeen) : '—'}</div>
+        <div class="muted" style="font-size:.85rem">Logins: ${p.loginCount||0} · Entries: ${p.entriesCount||0}</div>
+        <div class="muted" style="font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Devices: ${(p.devices||[]).join(', ')}</div>`;
+      card.addEventListener('click', () => filterByProfile(p));
+      grid.appendChild(card);
+    });
+    if (countEl) countEl.textContent = `${list.length} profile(s)`;
+  }
+  async function loadProfiles() {
+    try {
+      const j = await fetchProfiles(100);
+      renderProfiles(j.profiles || []);
+    } catch (e) {
+      const grid = document.getElementById('profiles');
+      if (grid) grid.innerHTML = `<div class="muted">Failed to load profiles: ${e.message||''}</div>`;
+    }
+  }
+  function filterByProfile(p) {
+    // Simple filter: reload entries and keep those matching name
+    load().then(() => {
+      try {
+        const name = ((p.first||'')+' '+(p.last||'')).trim().toLowerCase();
+        const trs = Array.from(rows.querySelectorAll('tr'));
+        let shown = 0;
+        trs.forEach(tr => {
+          const tds = tr.querySelectorAll('td');
+          if (!tds || tds.length < 2) return;
+          const rowName = (tds[1].textContent || '').trim().toLowerCase();
+          const keep = rowName === name;
+          tr.style.display = keep ? '' : 'none';
+          if (keep) shown++;
+        });
+        if (shown === 0) {
+          rows.insertAdjacentHTML('afterbegin', '<tr><td class="muted" colspan="8">No entries for this profile yet</td></tr>');
+        }
+      } catch {}
+    });
+  }
   const fmt = (ts)=> new Date(ts).toLocaleString();
   const rows = document.getElementById('rows');
   function parseUA(ua=''){
@@ -103,6 +185,8 @@
   document.getElementById('load').addEventListener('click', load);
   // Auto-load on mount
   load();
+  loadProfiles();
+  document.getElementById('reload-profiles').addEventListener('click', loadProfiles);
     rows.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-ts]');
       if (!btn) return;
