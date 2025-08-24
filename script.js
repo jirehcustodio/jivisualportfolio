@@ -482,6 +482,8 @@ function resetIntakeForm() {
     dlBtn.__wired = true;
     dlBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
       // Show maintenance notice and block download
       try {
         const toast = document.createElement('div');

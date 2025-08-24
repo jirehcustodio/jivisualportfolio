@@ -1,4 +1,4 @@
-const CACHE = 'portfolio-v7';
+const CACHE = 'portfolio-v8';
 const CORE = [
   './index.html',
   './style.css',
@@ -36,6 +36,14 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   event.respondWith((async () => {
     const url = new URL(request.url);
+    // Hard-block resume.pdf downloads while under maintenance
+    if (url.pathname.toLowerCase().endsWith('/resume.pdf') || url.pathname.toLowerCase().includes('resume.pdf')) {
+      return new Response('Resume download is under maintenance.', {
+        status: 410,
+        statusText: 'Gone',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' }
+      });
+    }
     const cache = await caches.open(CACHE);
     // HTML: network-first with offline fallback
     if (request.headers.get('accept')?.includes('text/html')) {
