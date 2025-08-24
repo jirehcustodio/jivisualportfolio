@@ -8,13 +8,12 @@ const CORS = {
   'content-type': 'application/json'
 };
 
-export default async (req, context) => {
-  const { method } = req;
-  const url = new URL(req.url);
-  if (method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-  if (method !== 'GET') return new Response(JSON.stringify({ ok: false, error: 'Method not allowed' }), { status: 405, headers: CORS });
-  const first = url.searchParams.get('first') || '';
-  const last = url.searchParams.get('last') || '';
-  // Stub: always false in serverless demo
-  return new Response(JSON.stringify({ exists: false, first, last }), { status: 200, headers: CORS });
+exports.handler = async function(event, context) {
+  const method = event.httpMethod || 'GET';
+  if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
+  if (method !== 'GET') return { statusCode: 405, headers: CORS, body: JSON.stringify({ ok: false, error: 'Method not allowed' }) };
+  const qs = event.queryStringParameters || {};
+  const first = qs.first || '';
+  const last = qs.last || '';
+  return { statusCode: 200, headers: CORS, body: JSON.stringify({ exists: false, first, last }) };
 };

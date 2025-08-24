@@ -11,34 +11,24 @@ const CORS = {
   'content-type': 'application/json'
 };
 
-export default async (req, context) => {
-  const { method } = req;
-  const url = new URL(req.url);
-  const path = url.pathname; // includes /api/intake and possible suffix
+exports.handler = async function(event, context) {
+  const method = event.httpMethod || 'GET';
+  const path = event.path || '';
+  if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
 
-  if (method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS });
-  }
-
-  // Minimal stub behavior to avoid network errors in production
   if (method === 'POST') {
     let body = null;
-    try { body = await req.json(); } catch {}
-    const saved = true; // stub: acknowledge
-    return new Response(JSON.stringify({ ok: true, saved, received: body || null }), { status: 200, headers: CORS });
+    try { body = event.body ? JSON.parse(event.body) : null; } catch { body = null; }
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, saved: true, received: body }) };
   }
-
   if (method === 'GET') {
     if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
-      return new Response(JSON.stringify({ entries: [] }), { status: 200, headers: CORS });
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ entries: [] }) };
     }
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
   }
-
   if (method === 'DELETE') {
-    // Accept ts param and return ok
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
+    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
   }
-
-  return new Response(JSON.stringify({ ok: false, error: 'Method not allowed' }), { status: 405, headers: CORS });
+  return { statusCode: 405, headers: CORS, body: JSON.stringify({ ok: false, error: 'Method not allowed' }) };
 };

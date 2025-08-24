@@ -9,30 +9,18 @@ const cors = {
   "content-type": "application/json"
 };
 
-export default async (req, context) => {
-  const { method } = req;
-  const url = new URL(req.url);
-
-  if (method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: cors });
+exports.handler = async function(event, context) {
+  const method = event.httpMethod || 'GET';
+  if (method === 'OPTIONS') {
+    return { statusCode: 204, headers: cors };
   }
-
   let body = null;
-  if (method !== "GET") {
-    try {
-      body = await req.json();
-    } catch (_) {
-      body = null;
-    }
+  if (method !== 'GET' && event.body) {
+    try { body = JSON.parse(event.body); } catch (_) { body = null; }
   }
-
-  const res = {
-    ok: true,
-    method,
-    path: url.pathname,
-    query: Object.fromEntries(url.searchParams.entries()),
-    body
-  };
-
-  return new Response(JSON.stringify(res), { status: 200, headers: cors });
+  // Parse query
+  const query = event.queryStringParameters || {};
+  const path = event.path || '';
+  const res = { ok: true, method, path, query, body };
+  return { statusCode: 200, headers: cors, body: JSON.stringify(res) };
 };
