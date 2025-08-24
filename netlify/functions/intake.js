@@ -42,13 +42,17 @@ exports.handler = async function(event, context) {
     }
   }
 
+  // Helper: normalize keys to avoid formatting mismatches
+  const normalize = (s) => (s == null ? '' : String(s)).trim().replace(/[^a-z0-9]/gi, '').toLowerCase();
+
   if (method === 'GET') {
     if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
       // Admin-only: require x-admin-key header (or ?key= / ?admin_key= fallback)
-      const headers = event.headers || {};
-      const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key);
+  const headers = event.headers || {};
+  const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key) || (event.queryStringParameters?.k);
   const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '08/07/2003').trim();
-      if (!ADMIN_KEY || provided !== ADMIN_KEY) {
+  // Normalize both sides (strip separators, case-insensitive)
+  if (!ADMIN_KEY || normalize(provided) !== normalize(ADMIN_KEY)) {
         return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
       }
       try {
@@ -66,9 +70,9 @@ exports.handler = async function(event, context) {
   if (method === 'DELETE') {
     // Admin-only
   const headers = event.headers || {};
-  const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key);
+  const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key) || (event.queryStringParameters?.k);
   const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '08/07/2003').trim();
-    if (!ADMIN_KEY || provided !== ADMIN_KEY) {
+  if (!ADMIN_KEY || normalize(provided) !== normalize(ADMIN_KEY)) {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
     }
     // delete by timestamp query ?ts=...

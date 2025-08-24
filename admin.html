@@ -45,9 +45,11 @@
       rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
       try {
         // Pass key via header and query param as a fallback
-        const u = new URL('/api/intake/entries', location.origin);
-        u.searchParams.set('key', key);
-        const r = await fetch(u.toString(), { headers: { 'x-admin-key': key } });
+  const u = new URL('/api/intake/entries', location.origin);
+  u.searchParams.set('key', key);
+  // Also send a compact alias to cover normalization differences
+  u.searchParams.set('k', key.replace(/[^a-z0-9]/gi, '').toLowerCase());
+  const r = await fetch(u.toString(), { headers: { 'x-admin-key': key } });
         if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Access denied</td></tr>'; return; }
         const j = await r.json();
         const list = Array.isArray(j.entries) ? j.entries : [];
@@ -96,10 +98,11 @@
       const key = document.getElementById('key').value.trim();
       const ts = btn.getAttribute('data-ts');
       if (!confirm('Delete this entry?')) return;
-      const u = new URL('/api/intake', location.origin);
+  const u = new URL('/api/intake', location.origin);
       u.searchParams.set('ts', ts);
-      u.searchParams.set('key', key);
-      const r = await fetch(u.toString(), { method: 'DELETE', headers: { 'x-admin-key': key } });
+  u.searchParams.set('key', key);
+  u.searchParams.set('k', key.replace(/[^a-z0-9]/gi, '').toLowerCase());
+  const r = await fetch(u.toString(), { method: 'DELETE', headers: { 'x-admin-key': key } });
       if (r.ok) load();
     });
   </script>
