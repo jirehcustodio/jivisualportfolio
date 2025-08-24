@@ -618,7 +618,18 @@ function resetIntakeForm() {
     if (devToggle && !devToggle.__wired){
       devToggle.__wired = true;
       devToggle.addEventListener('change', ()=>{
-        const on = !!devToggle.checked; localStorage.setItem(DEV_KEY, on ? 'on' : 'off'); syncDevUI();
+        const on = !!devToggle.checked; 
+        localStorage.setItem(DEV_KEY, on ? 'on' : 'off'); 
+        syncDevUI();
+        // If turning Developer Mode ON, automatically open the Admin Intake Viewer
+        if (on) {
+          try {
+            // Close the settings modal for a cleaner transition
+            if (modal) modal.style.display = 'none';
+            // Open admin viewer in a new tab to allow returning easily
+            window.open('admin.html', '_blank', 'noopener');
+          } catch {}
+        }
       });
     }
     if (toggleSafe && !toggleSafe.__wired){
