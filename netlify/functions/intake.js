@@ -9,7 +9,7 @@ const { getStore } = require('@netlify/blobs');
 const CORS = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
-  'access-control-allow-headers': 'content-type,authorization',
+  'access-control-allow-headers': 'content-type,authorization,x-admin-key,X-Admin-Key',
   'content-type': 'application/json'
 };
 
@@ -44,9 +44,10 @@ exports.handler = async function(event, context) {
 
   if (method === 'GET') {
     if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
-      // Admin-only: require x-admin-key header matching process.env.ADMIN_KEY
-      const provided = event.headers?.['x-admin-key'] || event.headers?.['X-Admin-Key'];
-      const ADMIN_KEY = process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY;
+      // Admin-only: require x-admin-key header (or ?key= / ?admin_key= fallback)
+      const headers = event.headers || {};
+      const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key);
+      const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '').trim();
       if (!ADMIN_KEY || provided !== ADMIN_KEY) {
         return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
       }
@@ -64,8 +65,9 @@ exports.handler = async function(event, context) {
 
   if (method === 'DELETE') {
     // Admin-only
-    const provided = event.headers?.['x-admin-key'] || event.headers?.['X-Admin-Key'];
-    const ADMIN_KEY = process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY;
+  const headers = event.headers || {};
+  const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key);
+  const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '').trim();
     if (!ADMIN_KEY || provided !== ADMIN_KEY) {
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
     }

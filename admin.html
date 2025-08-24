@@ -44,7 +44,10 @@
       const key = document.getElementById('key').value.trim();
       rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
       try {
-        const r = await fetch('/api/intake/entries', { headers: { 'x-admin-key': key } });
+        // Pass key via header and query param as a fallback
+        const u = new URL('/api/intake/entries', location.origin);
+        u.searchParams.set('key', key);
+        const r = await fetch(u.toString(), { headers: { 'x-admin-key': key } });
         if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Access denied</td></tr>'; return; }
         const j = await r.json();
         const list = Array.isArray(j.entries) ? j.entries : [];
