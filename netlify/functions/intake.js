@@ -46,7 +46,7 @@ exports.handler = async function(event, context) {
   const normalize = (s) => (s == null ? '' : String(s)).trim().replace(/[^a-z0-9]/gi, '').toLowerCase();
 
   if (method === 'GET') {
-    if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
+  if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries') || (path.endsWith('/intake') && ((event.queryStringParameters?.list === '1') || (event.queryStringParameters?.entries === '1')))) {
       // Public: list entries, newest first; supports optional limit and since filters
       try {
         let entries = (await store.get(KEY, { type: 'json' })) || [];

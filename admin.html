@@ -62,7 +62,11 @@
     } catch { return ''; }
   }
   async function fetchEntries(limit){
-    const paths = ['/api/intake/entries', '/.netlify/functions/intake/entries'];
+    const paths = [
+      '/api/intake/entries',
+      '/.netlify/functions/intake/entries',
+      '/.netlify/functions/intake?entries=1'
+    ];
     let lastError = null, lastStatus = 0;
     for (const p of paths){
       try {
