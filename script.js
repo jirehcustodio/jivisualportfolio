@@ -605,11 +605,21 @@ function resetIntakeForm() {
       if (devLinks) devLinks.style.display = on ? 'block' : 'none';
       document.documentElement.classList.toggle('dev-mode', on);
     }
-    function open(){ if (modal) modal.style.display = 'block'; }
-    function close(){ if (modal) modal.style.display = 'none'; }
+  function open(){ if (modal) { modal.style.display = 'block'; modal.removeAttribute('aria-hidden'); } }
+  function close(){ if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden','true'); } }
 
   if (openBtn && !openBtn.__wired){ openBtn.__wired = true; openBtn.addEventListener('click', open); }
   if (openBtnRight && !openBtnRight.__wired){ openBtnRight.__wired = true; openBtnRight.addEventListener('click', open); }
+    // Delegated fallback: ensure Settings opens even if direct wiring fails
+    if (!document.__wiredOpenSettings) {
+      document.__wiredOpenSettings = true;
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!t) return;
+        const btn = t.closest && t.closest('#open-settings, #open-settings-right');
+        if (btn) { e.preventDefault(); open(); }
+      }, true);
+    }
     if (closeBtn && !closeBtn.__wired){ closeBtn.__wired = true; closeBtn.addEventListener('click', close); }
     if (modal && !modal.__wired){
       modal.__wired = true;
@@ -618,14 +628,22 @@ function resetIntakeForm() {
     if (devToggle && !devToggle.__wired){
       devToggle.__wired = true;
       devToggle.addEventListener('change', ()=>{
-        const on = !!devToggle.checked; 
-        localStorage.setItem(DEV_KEY, on ? 'on' : 'off'); 
+        const on = !!devToggle.checked;
+        localStorage.setItem(DEV_KEY, on ? 'on' : 'off');
         syncDevUI();
-        // If turning Developer Mode ON, automatically open the Admin Intake Viewer
+        // If turning Developer Mode ON, prompt for Admin Key and open the Admin Intake Viewer
         if (on) {
           try {
+            // Ask for admin key (prefill from saved if present)
+            let saved = '';
+            try { saved = localStorage.getItem('admin:key') || ''; } catch {}
+            const input = window.prompt('Enter your Admin Key to view intake entries:', saved);
+            if (input !== null) {
+              const key = String(input).trim();
+              if (key) { try { localStorage.setItem('admin:key', key); } catch {} }
+            }
             // Close the settings modal for a cleaner transition
-            if (modal) modal.style.display = 'none';
+            close();
             // Open admin viewer in a new tab to allow returning easily
             window.open('admin.html', '_blank', 'noopener');
           } catch {}
