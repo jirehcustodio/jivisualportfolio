@@ -482,7 +482,15 @@ function resetIntakeForm() {
     dlBtn.__wired = true;
     dlBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      downloadResumeAndCV();
+      // Show maintenance notice and block download
+      try {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = 'Resume download is under maintenance.';
+        document.body.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { try { toast.remove(); } catch {} }, 260); }, 2000);
+      } catch {}
     });
   }
 
@@ -1473,7 +1481,16 @@ function updateTabsIndicator() {
   { label: 'My Info', desc: 'Open About tab', run: () => setActiveTab('about'), keywords: ['about', 'info', 'me'] },
   { label: 'Explore Work', desc: 'Open Coding tab', run: () => setActiveTab('coding'), keywords: ['work', 'coding', 'projects'] },
   { label: 'Contact', desc: 'Open Contact tab', run: () => setActiveTab('contact'), keywords: ['contact', 'email'] },
-  { label: 'Download Resume', desc: 'Download encrypted PDF', run: () => downloadResumeAndCV(), keywords: ['resume', 'download'] },
+  { label: 'Download Resume (Under maintenance)', desc: 'Temporarily disabled', run: () => {
+    try {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = 'Resume download is under maintenance.';
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { try { toast.remove(); } catch {} }, 260); }, 2000);
+    } catch {}
+  }, keywords: ['resume', 'download'] },
       { label: 'Install App', desc: window.__pwaInstallAvailable ? 'Install this portfolio as an app' : 'Install not available', run: async () => { if (window.requestPWAInstall) await window.requestPWAInstall(); }, keywords: ['pwa', 'install', 'app'] },
       { label: 'Show Intro', desc: 'Replay the splash intro', run: async () => { try { sessionStorage.removeItem('splashSeen'); } catch {}; await showSplash(); }, keywords: ['intro','splash','welcome'] },
     ];
@@ -1815,21 +1832,15 @@ function escapeHtml(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'
 
 // ---- Resume/CV download helper ----
 function downloadResumeAndCV() {
-  const file = { href: 'resume.pdf', name: 'Jireh_Custodio_Resume.pdf' };
-  const bust = Date.now();
+  // Disabled: show notice instead of downloading
   try {
-    const a = document.createElement('a');
-    const u = new URL(file.href, window.location.href);
-    u.searchParams.set('v', String(bust));
-    a.href = u.toString();
-    a.download = file.name;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } catch {
-    window.open(file.href, '_blank');
-  }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = 'Resume download is under maintenance.';
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { try { toast.remove(); } catch {} }, 260); }, 2000);
+  } catch {}
 }
 
 // Back-compat: inline onclick="showTab('home')" still present in HTML
