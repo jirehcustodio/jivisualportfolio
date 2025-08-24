@@ -491,6 +491,12 @@ function resetIntakeForm() {
         requestAnimationFrame(() => toast.classList.add('show'));
         setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { try { toast.remove(); } catch {} }, 260); }, 2000);
       } catch {}
+      // Visually reflect disabled state and label
+      try {
+        dlBtn.setAttribute('aria-disabled', 'true');
+        dlBtn.setAttribute('title', 'Under maintenance');
+        dlBtn.textContent = 'Download Resume (Under Maintenance)';
+      } catch {}
     });
   }
 
@@ -1842,6 +1848,19 @@ function downloadResumeAndCV() {
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { try { toast.remove(); } catch {} }, 260); }, 2000);
   } catch {}
 }
+
+// Global guard: block any direct attempts to open or download resume.pdf
+window.addEventListener('click', (e) => {
+  try {
+    const a = e.target.closest && e.target.closest('a');
+    if (!a) return;
+    const href = (a.getAttribute('href') || '').toLowerCase();
+    if (href.endsWith('resume.pdf') || href.includes('/resume.pdf')) {
+      e.preventDefault();
+      downloadResumeAndCV();
+    }
+  } catch {}
+}, true);
 
 // Back-compat: inline onclick="showTab('home')" still present in HTML
 function showTab(tab) { try { setActiveTab(tab); } catch {} }
