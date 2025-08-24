@@ -109,14 +109,16 @@ function idbDelete(id) {
 
 async function tryPostIntake(payload) {
   const opts = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) };
-  try {
-    const r1 = await fetch('http://localhost:3001/intake', opts);
-    if (r1.ok) return true;
-  } catch {}
-  try {
-    const r2 = await fetch('http://localhost:3002/intake', opts);
-    if (r2.ok) return true;
-  } catch {}
+  const origin = self.location.origin || '';
+  const candidates = [];
+  if (origin && /^https?:/i.test(origin)) {
+    candidates.push(origin.replace(/\/$/, '') + '/.netlify/functions/intake');
+    candidates.push(origin.replace(/\/$/, '') + '/api/intake');
+  }
+  candidates.push('http://localhost:3001/intake', 'http://localhost:3002/intake');
+  for (const url of candidates) {
+    try { const r = await fetch(url, opts); if (r.ok) return true; } catch {}
+  }
   return false;
 }
 

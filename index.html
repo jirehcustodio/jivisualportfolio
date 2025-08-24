@@ -20,7 +20,8 @@
   <link rel="icon" type="image/png" href="websitelogo.png" sizes="32x32">
   <!-- Safari/Apple touch icon (PNG recommended) -->
   <link rel="apple-touch-icon" href="websitelogo.png" sizes="180x180">
-  <link rel="preconnect" href="http://localhost:3001">
+  <!-- Prefer same-origin /api in production; preconnect to localhost only for dev -->
+  <!-- <link rel="preconnect" href="http://localhost:3001"> -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -657,7 +658,8 @@
   <script>
     // Lightweight front-end event and metrics fetch with mini sparklines + status dot
     (function () {
-      const BASE = window.__BACKEND_URL || 'http://localhost:3001';
+  const origin = window.location.origin || '';
+  const BASE = (origin && origin.startsWith('http')) ? (origin + '/api') : (window.__BACKEND_URL || 'http://localhost:3001');
       const statusDot = document.getElementById('metrics-status');
       // Fire a pageview event (best-effort)
       try { fetch(BASE + '/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'pageview', detail: { path: location.pathname } }) }).catch(()=>{}); } catch {}

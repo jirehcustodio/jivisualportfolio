@@ -125,14 +125,21 @@ async function submitIntake() {
   }
   if (loader) loader.style.display = 'flex';
   const payload = { first, last, age, type, school: type==='student'?school:'', company: type==='employee'?company:'' };
-  // Resolve resume backend bases: meta override, same-origin, then localhost fallbacks
+  // Resolve resume backend bases: prefer same-origin /api when on HTTPS/Netlify; fallback to meta override and localhost in dev
   function getResumeApiBases() {
     try {
       const meta = document.querySelector('meta[name="resume-api"]')?.content?.trim();
       const bases = [];
       if (meta) bases.push(meta.replace(/\/$/, ''));
       const origin = (window.location && window.location.origin) ? window.location.origin : '';
-      if (origin && /^https?:/i.test(origin)) bases.push(origin.replace(/\/$/, ''));
+      const isHttps = /^https:/i.test(origin);
+      // Prefer same-origin function path in production
+      if (origin && /^https?:/i.test(origin)) {
+        // Map to functions mount
+        bases.push(origin.replace(/\/$/, '') + '/.netlify/functions');
+        bases.push(origin.replace(/\/$/, '') + '/api');
+        bases.push(origin.replace(/\/$/, ''));
+      }
       // local fallbacks
       bases.push('http://localhost:3001', 'http://localhost:3002');
       return Array.from(new Set(bases));
@@ -140,9 +147,10 @@ async function submitIntake() {
   }
   // Check server for existing profile (cross-device)
   async function checkExists(f, l) {
-    const tryOne = async (base) => {
+  const tryOne = async (base) => {
       try {
-        const u = `${base.replace(/\/$/,'')}/profiles/exists?first=${encodeURIComponent(f)}&last=${encodeURIComponent(l)}`;
+    const clean = base.replace(/\/$/,'');
+    const u = `${clean}/profiles/exists?first=${encodeURIComponent(f)}&last=${encodeURIComponent(l)}`;
         const r = await fetch(u, { method: 'GET' });
         if (!r.ok) return null; return await r.json();
       } catch { return null; }
