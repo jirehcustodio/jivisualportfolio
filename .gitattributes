@@ -1,0 +1,10 @@
+# Treat large/binary assets as binary to speed up diffs and change scanning
+*.gif binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
+*.mp4 binary
+*.mov binary
+*.zip binary

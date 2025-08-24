@@ -185,7 +185,11 @@ async function submitIntake() {
       }
     } catch {}
   }
-  try { localStorage.setItem('portfolioLoggedIn', 'true'); } catch {}
+  // Mark this tab's session as logged in (per-session); clear legacy flag if present
+  try {
+    sessionStorage.setItem('portfolioLoggedIn', 'true');
+    localStorage.removeItem('portfolioLoggedIn');
+  } catch {}
   // Persist profile name and mark returning/new status
   try {
     const fullName = `${first} ${last}`.trim().replace(/\s+/g, ' ');
@@ -198,8 +202,10 @@ async function submitIntake() {
       profiles.push(fullName);
       localStorage.setItem('profiles:names', JSON.stringify(profiles));
     }
-    localStorage.setItem('profile:currentName', fullName);
+  localStorage.setItem('profile:currentName', fullName);
     sessionStorage.setItem('profile:returning', returning ? '1' : '0');
+  // Notify listeners (pet, achievements, etc.) that the active profile changed
+  try { window.dispatchEvent(new CustomEvent('profile:changed', { detail: { name: fullName, key }, bubbles: false })); } catch {}
   } catch {}
   showIntakeSummary({ ...payload, __saved: saved });
   const loginBox = document.getElementById('login-box');
@@ -351,7 +357,8 @@ function logout() {
   // Give the GIF time to show before clearing UI (adjust delay as desired)
   const delay = getLogoutDelay();
   setTimeout(() => {
-    try { localStorage.removeItem('portfolioLoggedIn'); } catch {}
+  try { sessionStorage.removeItem('portfolioLoggedIn'); } catch {}
+  try { localStorage.removeItem('portfolioLoggedIn'); } catch {}
     try { sessionStorage.removeItem('splashSeen'); } catch {}
     // Ensure any loading overlay is hidden
     const loader = document.getElementById('login-loading');
@@ -417,7 +424,15 @@ function resetIntakeForm() {
     try { sessionStorage.removeItem('splashSeen'); } catch {}
   }
 
-  if (localStorage.getItem('portfolioLoggedIn') === 'true') {
+  // Migrate legacy persistent flag to session for current visit only
+  try {
+    if (localStorage.getItem('portfolioLoggedIn') === 'true' && !sessionStorage.getItem('portfolioLoggedIn')) {
+      sessionStorage.setItem('portfolioLoggedIn', 'true');
+      localStorage.removeItem('portfolioLoggedIn');
+    }
+  } catch {}
+
+  if (sessionStorage.getItem('portfolioLoggedIn') === 'true') {
     const loginBox = document.getElementById('login-box');
     if (loginBox) loginBox.style.display = 'none';
     const after = () => revealPortfolio();
@@ -459,6 +474,15 @@ function resetIntakeForm() {
 
   // Ensure tabs are wired even before reveal (fallback to delegation)
   wireTabs();
+
+  // Announce current profile once on load so namespaced systems can initialize
+  try {
+    const fullName = (localStorage.getItem('profile:currentName') || '').trim();
+    if (fullName) {
+      const key = fullName.toLowerCase();
+      window.dispatchEvent(new CustomEvent('profile:changed', { detail: { name: fullName, key }, bubbles: false }));
+    }
+  } catch {}
 
   // Wire CTA buttons
   const explore = document.getElementById('explore-work');
@@ -2197,6 +2221,8 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
       });
     }
   });
+  // Refresh badges when active profile changes
+  try { window.addEventListener('profile:changed', () => render()); } catch {}
 })();
 
 // Postcard feature removed
@@ -2206,20 +2232,56 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
   window.addEventListener('DOMContentLoaded', () => {
   const widget = document.getElementById('pixel-pet');
     if (!widget) return;
-    const LV_KEY = 'pet:level';
-    const XP_KEY = 'pet:xp';
-    const NAME_KEY = 'pet:name';
-    const HIDE_KEY = 'pet:hidden';
-    const FEED_KEY = 'pet:feedCount';
-    const PLAY_KEY = 'pet:playCount';
+    // Per-profile namespacing helpers
+    function activeProfileName() {
+      try { return (localStorage.getItem('profile:currentName') || '').trim().toLowerCase() || null; } catch { return null; }
+    }
+    function petKey(suffix) {
+      const prof = activeProfileName();
+      return prof ? `pet:${prof}:${suffix}` : `pet:${suffix}`;
+    }
+    // Key suffixes (used via petKey())
+    const LV_KEY = 'level';
+    const XP_KEY = 'xp';
+    const NAME_KEY = 'name';
+    const HIDE_KEY = 'hidden';
+    const FEED_KEY = 'feedCount';
+    const PLAY_KEY = 'playCount';
+    // Migrate legacy global pet keys into current profile once
+    (function migrateLegacyPet(){
+      try {
+        const prof = activeProfileName();
+        if (!prof) return;
+        const marker = `pet:${prof}:migrated`;
+        if (localStorage.getItem(marker) === '1') return;
+        const legacy = {
+          level: localStorage.getItem('pet:level'),
+          xp: localStorage.getItem('pet:xp'),
+          name: localStorage.getItem('pet:name'),
+          hidden: localStorage.getItem('pet:hidden'),
+          feedCount: localStorage.getItem('pet:feedCount'),
+          playCount: localStorage.getItem('pet:playCount'),
+        };
+        const any = Object.values(legacy).some(v => v != null);
+        if (any) {
+          if (legacy.level != null) localStorage.setItem(petKey('level'), legacy.level);
+          if (legacy.xp != null) localStorage.setItem(petKey('xp'), legacy.xp);
+          if (legacy.name != null) localStorage.setItem(petKey('name'), legacy.name);
+          if (legacy.hidden != null) localStorage.setItem(petKey('hidden'), legacy.hidden);
+          if (legacy.feedCount != null) localStorage.setItem(petKey('feedCount'), legacy.feedCount);
+          if (legacy.playCount != null) localStorage.setItem(petKey('playCount'), legacy.playCount);
+        }
+        localStorage.setItem(marker, '1');
+      } catch {}
+    })();
     const DAILY_LIMIT = 3; // clicks per day per action
-    let level = parseInt(localStorage.getItem(LV_KEY) || '1', 10) || 1;
-    let xp = parseInt(localStorage.getItem(XP_KEY) || '0', 10) || 0;
+    let level = parseInt(localStorage.getItem(petKey(LV_KEY)) || '1', 10) || 1;
+    let xp = parseInt(localStorage.getItem(petKey(XP_KEY)) || '0', 10) || 0;
     const badge = widget.querySelector('.lv-badge');
     const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const safeMode = document.documentElement.classList.contains('safe-mode') || prefersReduced;
     // Name: render small label in widget
-    let petName = (localStorage.getItem(NAME_KEY) || 'Buddy').trim().slice(0, 24) || 'Buddy';
+  let petName = (localStorage.getItem(petKey(NAME_KEY)) || 'Buddy').trim().slice(0, 24) || 'Buddy';
     let nameEl = widget.querySelector('.pet-name');
     if (!nameEl) {
       nameEl = document.createElement('span');
@@ -2254,9 +2316,9 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
       return next.count;
     }
     function resetIfNewDay(){
-      const f = readCount(FEED_KEY), p = readCount(PLAY_KEY); // read ensures reset
-      writeCount(FEED_KEY, { day: todayKey(), count: f.day===todayKey()?f.count:0 });
-      writeCount(PLAY_KEY, { day: todayKey(), count: p.day===todayKey()?p.count:0 });
+      const f = readCount(petKey(FEED_KEY)), p = readCount(petKey(PLAY_KEY)); // read ensures reset
+      writeCount(petKey(FEED_KEY), { day: todayKey(), count: f.day===todayKey()?f.count:0 });
+      writeCount(petKey(PLAY_KEY), { day: todayKey(), count: p.day===todayKey()?p.count:0 });
     }
     function msToMidnight(){
       const now = new Date();
@@ -2272,7 +2334,7 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
       return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
     }
     function needXP(lv) { return 5 + (lv - 1) * 3; }
-    function save() { localStorage.setItem(LV_KEY, String(level)); localStorage.setItem(XP_KEY, String(xp)); }
+  function save() { try { localStorage.setItem(petKey(LV_KEY), String(level)); localStorage.setItem(petKey(XP_KEY), String(xp)); } catch {} }
     function render() { if (badge) badge.textContent = `Lv${level}`; }
     function gain(n = 1) {
       xp += n;
@@ -2324,10 +2386,10 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
   pointerEvents: 'auto', fontSize: '24px', cursor: 'grab', touchAction: 'none'
     });
   // Respect saved hidden state immediately
-  if (localStorage.getItem(HIDE_KEY) === '1') { pet.style.opacity = '0'; }
+  if (localStorage.getItem(petKey(HIDE_KEY)) === '1') { pet.style.opacity = '0'; }
 
   let state = 'idle'; // idle | walk | hide | chase | sleep
-  let petHidden = (localStorage.getItem(HIDE_KEY) === '1');
+  let petHidden = (localStorage.getItem(petKey(HIDE_KEY)) === '1');
     let target = { x: 40, y: window.innerHeight * 0.7 };
     let pos = { x: target.x, y: target.y };
     let vx = 0, vy = 0;
@@ -2582,7 +2644,7 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
     function updateName(newName){
       petName = (newName||'').trim().slice(0,24) || 'Buddy';
       nameEl.textContent = petName;
-      try { localStorage.setItem(NAME_KEY, petName); } catch {}
+      try { localStorage.setItem(petKey(NAME_KEY), petName); } catch {}
   // No-op for rail summary
     }
 
@@ -2590,8 +2652,8 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
       const cur = readCount(key); return Math.max(0, DAILY_LIMIT - cur.count);
     }
     function refreshLimitsUI(){
-  const fUsed = Math.min(DAILY_LIMIT, readCount(FEED_KEY).count);
-  const pUsed = Math.min(DAILY_LIMIT, readCount(PLAY_KEY).count);
+  const fUsed = Math.min(DAILY_LIMIT, readCount(petKey(FEED_KEY)).count);
+  const pUsed = Math.min(DAILY_LIMIT, readCount(petKey(PLAY_KEY)).count);
   const fRemain = Math.max(0, DAILY_LIMIT - fUsed);
   const pRemain = Math.max(0, DAILY_LIMIT - pUsed);
       const feedNum = meter.querySelector('#pet-feed-num');
@@ -2622,12 +2684,12 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
       const btn = e.target.closest('button'); if (!btn) return;
       const act = btn.getAttribute('data-act');
   if (act === 'feed') {
-        if (usesLeftFor(FEED_KEY) <= 0) return;
-    incCount(FEED_KEY); refreshLimitsUI(); emote('heart'); emote('feed'); gain(2); wakeUp();
+        if (usesLeftFor(petKey(FEED_KEY)) <= 0) return;
+    incCount(petKey(FEED_KEY)); refreshLimitsUI(); emote('heart'); emote('feed'); gain(2); wakeUp();
       }
       if (act === 'play') {
-        if (usesLeftFor(PLAY_KEY) <= 0) return;
-  incCount(PLAY_KEY); refreshLimitsUI(); emote('star'); emote('play'); gain(3); wakeUp();
+        if (usesLeftFor(petKey(PLAY_KEY)) <= 0) return;
+  incCount(petKey(PLAY_KEY)); refreshLimitsUI(); emote('star'); emote('play'); gain(3); wakeUp();
   runUntilTs = Date.now() + RUN_BOOST_MS;
         // Nudge into a fun move along/among platforms
         if (currentEl) {
@@ -2637,7 +2699,7 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
         }
       }
       if (act === 'toggle') {
-        petHidden = !petHidden; localStorage.setItem(HIDE_KEY, petHidden ? '1' : '0');
+        petHidden = !petHidden; localStorage.setItem(petKey(HIDE_KEY), petHidden ? '1' : '0');
         const tBtn = row1.querySelector('button[data-act="toggle"]'); if (tBtn) tBtn.textContent = petHidden ? 'Show Pet' : 'Hide Pet';
         // Soft hide
         if (petHidden) { pet.style.opacity = '0'; } else { pet.style.opacity = '1'; }
@@ -2659,7 +2721,7 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
     // Expose quick helpers for Command-K palette
     window.__petIsHidden = () => petHidden;
     window.__petToggle = () => {
-      petHidden = !petHidden; localStorage.setItem(HIDE_KEY, petHidden ? '1' : '0');
+      petHidden = !petHidden; localStorage.setItem(petKey(HIDE_KEY), petHidden ? '1' : '0');
       const tBtn = row1.querySelector('button[data-act="toggle"]'); if (tBtn) tBtn.textContent = petHidden ? 'Show Pet' : 'Hide Pet';
       pet.style.opacity = petHidden ? '0' : '1';
     };
@@ -3048,6 +3110,22 @@ function showTab(tab) { try { setActiveTab(tab); } catch {} }
     const orig = window.setActiveTab; window.setActiveTab = function() { try { gain(1); } catch {} return orig.apply(this, arguments); };
     document.querySelectorAll('a[href$=".html"]').forEach(a => a.addEventListener('click', () => gain(2), { once: true }));
     render();
+    // When active profile changes, reload namespaced pet state
+  window.addEventListener('profile:changed', () => {
+      try {
+    // If user had legacy global pet data, copy it into their namespaced keys now
+    if (typeof migrateLegacyPet === 'function') migrateLegacyPet();
+        level = parseInt(localStorage.getItem(petKey(LV_KEY)) || '1', 10) || 1;
+        xp = parseInt(localStorage.getItem(petKey(XP_KEY)) || '0', 10) || 0;
+        petName = (localStorage.getItem(petKey(NAME_KEY)) || 'Buddy').trim().slice(0, 24) || 'Buddy';
+        nameEl.textContent = petName;
+        petHidden = (localStorage.getItem(petKey(HIDE_KEY)) === '1');
+        pet.style.opacity = petHidden ? '0' : '1';
+        resetIfNewDay();
+        refreshLimitsUI();
+        render();
+      } catch {}
+    });
   });
 })();
 
