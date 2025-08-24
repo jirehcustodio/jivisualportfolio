@@ -1,0 +1,10 @@
+{
+  "name": "jivisualportfolio",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^6.3.0"
+  }
+}
