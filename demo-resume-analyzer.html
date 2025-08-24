@@ -136,7 +136,7 @@
       </style>`;
       result.style.display = 'block';
   const origin = window.location.origin || '';
-  const API_BASE = (origin && origin.startsWith('http')) ? (origin + '/api') : (window.__BACKEND_URL || 'http://localhost:3001');
+  const API_BASE = (origin && origin.startsWith('http')) ? (origin + '/.netlify/functions') : (window.__BACKEND_URL || 'http://localhost:3001');
   const role = (document.getElementById('target-role')?.value || '').trim();
   const jd = (document.getElementById('job-desc')?.value || '').trim();
   const params = new URLSearchParams();
@@ -315,7 +315,7 @@
         .finally(() => {
           // Send a lightweight event to backend (best-effort)
           try {
-            fetch(((origin && origin.startsWith('http')) ? (origin + '/api') : (window.__BACKEND_URL || 'http://localhost:3001')) + '/events', {
+            fetch(((origin && origin.startsWith('http')) ? (origin + '/.netlify/functions') : (window.__BACKEND_URL || 'http://localhost:3001')) + '/events', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ type: 'analyze_complete' })
@@ -329,9 +329,10 @@
       const email = (document.getElementById('contact-email')?.value || '').trim();
       const message = (document.getElementById('contact-message')?.value || '').trim();
       const statusEl = document.getElementById('contact-status');
-      const API_BASE = window.__BACKEND_URL || 'http://localhost:3001';
-      statusEl.textContent = 'Sending…';
-      fetch(API_BASE + '/contact', {
+  const origin2 = window.location.origin || '';
+  const API_BASE2 = (origin2 && origin2.startsWith('http')) ? (origin2 + '/.netlify/functions') : (window.__BACKEND_URL || 'http://localhost:3001');
+  statusEl.textContent = 'Sending…';
+  fetch(API_BASE2 + '/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, message, page: 'analyzer' })
