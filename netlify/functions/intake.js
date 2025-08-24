@@ -11,10 +11,13 @@ try {
   // If explicit credentials provided, create a client manually; else rely on Netlify env
   const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || process.env.BLOBS_SITE_ID;
   const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || process.env.BLOBS_TOKEN;
-  if (blobs.createClient && siteID && token) {
+  const looksLikeGuid = typeof siteID === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(siteID);
+  const looksLikeToken = typeof token === 'string' && token.startsWith('nfp_');
+  if (blobs.createClient && looksLikeGuid && looksLikeToken) {
     const client = blobs.createClient({ siteID, token });
     getStore = client.getStore.bind(client);
   } else {
+    // Fall back to Netlify-provided context (works on production Functions)
     getStore = blobs.getStore;
   }
 } catch (e) {
@@ -34,7 +37,20 @@ exports.handler = async function(event, context) {
   if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
 
   // Blobs store for this site; key 'entries.json' holds an array of records
-  const store = blobsOk && typeof getStore === 'function' ? getStore('intake') : null;
+  let store = null;
+  if (blobsOk && typeof getStore === 'function') {
+    try {
+      // Netlify runtime usually supports string name
+      store = getStore('intake');
+    } catch (_) {
+      try {
+        // Client-based API expects an options object
+        store = getStore({ name: 'intake' });
+      } catch (_) {
+        store = null;
+      }
+    }
+  }
   const KEY = 'entries.json';
 
   if (method === 'POST') {

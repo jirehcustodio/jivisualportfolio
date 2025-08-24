@@ -5,6 +5,6 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@netlify/blobs": "^6.3.0"
+    "@netlify/blobs": "^6.5.0"
   }
 }
