@@ -162,10 +162,7 @@ body {
 .theme-ambient .hero-title::after,
 .theme-ambient .hero-accent,
 .theme-ambient .stat-number {
-  background: linear-gradient(90deg, var(--ambient-primary), var(--ambient-accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #0f1419;
 }
 .theme-ambient .cta-btn,
 .theme-ambient .tab-indicator,
@@ -268,13 +265,9 @@ body {
   font-weight: 700;
   font-size: 1.1em;
   letter-spacing: 0.5px;
-  background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent), var(--brand-hot), var(--brand-primary));
-  background-size: 250% 250%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientTextMove 6s ease-in-out infinite alternate;
-  transition: background var(--duration) var(--easing);
+  color: #0f1419; /* high contrast for visibility */
+  text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+  transition: color var(--duration) var(--easing);
   display: inline-block;
 }
 @keyframes gradientTextMove {
