@@ -589,6 +589,7 @@ function resetIntakeForm() {
 (function settingsPanel(){
   window.addEventListener('DOMContentLoaded', function(){
     const openBtn = document.getElementById('open-settings');
+  const openBtnRight = document.getElementById('open-settings-right');
     const modal = document.getElementById('settings-modal');
     const closeBtn = document.getElementById('settings-close');
     const devToggle = document.getElementById('dev-mode-toggle');
@@ -606,7 +607,8 @@ function resetIntakeForm() {
     function open(){ if (modal) modal.style.display = 'block'; }
     function close(){ if (modal) modal.style.display = 'none'; }
 
-    if (openBtn && !openBtn.__wired){ openBtn.__wired = true; openBtn.addEventListener('click', open); }
+  if (openBtn && !openBtn.__wired){ openBtn.__wired = true; openBtn.addEventListener('click', open); }
+  if (openBtnRight && !openBtnRight.__wired){ openBtnRight.__wired = true; openBtnRight.addEventListener('click', open); }
     if (closeBtn && !closeBtn.__wired){ closeBtn.__wired = true; closeBtn.addEventListener('click', close); }
     if (modal && !modal.__wired){
       modal.__wired = true;

@@ -26,6 +26,7 @@
     <div class="admin-head">
       <input id="key" class="admin-input" type="password" placeholder="Admin key" aria-label="Admin key" />
       <button id="load" class="admin-btn">Load Entries</button>
+      <button id="remember" class="theme-toggle" style="margin-left:auto">Remember on this device</button>
     </div>
     <div id="out" class="card" style="padding:0">
       <table aria-label="Intake entries">
@@ -60,6 +61,13 @@
       }
     }
     document.getElementById('load').addEventListener('click', load);
+    document.getElementById('remember').addEventListener('click', ()=>{
+      const val = document.getElementById('key').value.trim();
+      if (!val) return alert('Enter a key first.');
+      try { localStorage.setItem('admin:key', val); alert('Saved on this device.'); } catch {}
+    });
+    // Prefill if saved locally
+    try { const saved = localStorage.getItem('admin:key'); if (saved) document.getElementById('key').value = saved; } catch {}
     rows.addEventListener('click', async (e) => {
       const btn = e.target.closest('button[data-ts]');
       if (!btn) return;

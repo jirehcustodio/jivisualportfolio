@@ -1360,6 +1360,19 @@ body {
   flex-direction: column;
   gap: 0.4rem;
 }
+.dev-mode .side-rail::before {
+  content: 'DEV MODE';
+  display: block;
+  font-family: 'Press Start 2P','Silkscreen',monospace;
+  font-size: 10px;
+  letter-spacing: 0;
+  color: #ef4565;
+  background: #fff0f3;
+  border: 1px dashed #ef4565;
+  border-radius: 8px;
+  padding: 4px 6px;
+  margin: 2px 2px 4px;
+}
 .rail-item {
   display: flex;
   align-items: center;
