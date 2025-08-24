@@ -63,12 +63,11 @@ exports.handler = async function(event) {
   const method = event.httpMethod || 'GET';
   const path = event.path || '';
   if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
-  if (!blobsOk || typeof getStore !== 'function') {
-    return { statusCode: 503, headers: CORS, body: JSON.stringify({ ok: false, error: 'Storage not configured' }) };
-  }
+  const storageAvailable = blobsOk && typeof getStore === 'function';
   let store = null;
-  try { store = getStore('profiles'); } catch { try { store = getStore({ name: 'profiles' }); } catch { store = null; } }
-  if (!store) return { statusCode: 503, headers: CORS, body: JSON.stringify({ ok: false, error: 'No store' }) };
+  if (storageAvailable) {
+    try { store = getStore('profiles'); } catch { try { store = getStore({ name: 'profiles' }); } catch { store = null; } }
+  }
 
   const qs = event.queryStringParameters || {};
   const first = qs.first || '';
@@ -78,17 +77,20 @@ exports.handler = async function(event) {
   if (method === 'GET') {
     if (/\/profiles\/(exists|get|list)$/.test(path) || path.endsWith('/profiles') || path.includes('/profiles')) {
       if (path.endsWith('/profiles/exists')) {
+        if (!store) return { statusCode: 200, headers: CORS, body: JSON.stringify({ exists: false, key: k, note: 'Storage not configured' }) };
         const all = await loadAll(store);
         const exists = !!all[k];
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ exists, key: k }) };
       }
       if (path.endsWith('/profiles/get')) {
+        if (!store) return { statusCode: 404, headers: CORS, body: JSON.stringify({ ok: false, error: 'Not found' }) };
         const all = await loadAll(store);
         const profile = all[k];
         if (!profile) return { statusCode: 404, headers: CORS, body: JSON.stringify({ ok: false, error: 'Not found' }) };
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ profile }) };
       }
       if (path.endsWith('/profiles/list') || path.endsWith('/profiles')) {
+        if (!store) return { statusCode: 200, headers: CORS, body: JSON.stringify({ profiles: [], note: 'Storage not configured' }) };
         const all = await loadAll(store);
         let list = Object.values(all).map(p => ({
           key: p.key, first: p.first, last: p.last, created: p.created, updated: p.updated,
@@ -105,7 +107,8 @@ exports.handler = async function(event) {
   }
 
   if (method === 'POST') {
-    if (!event.body) return { statusCode: 400, headers: CORS, body: JSON.stringify({ ok: false, error: 'Missing body' }) };
+  if (!event.body) return { statusCode: 400, headers: CORS, body: JSON.stringify({ ok: false, error: 'Missing body' }) };
+  if (!store) return { statusCode: 503, headers: CORS, body: JSON.stringify({ ok: false, error: 'Storage not configured' }) };
     let body; try { body = JSON.parse(event.body); } catch { return { statusCode: 400, headers: CORS, body: JSON.stringify({ ok: false, error: 'Invalid JSON' }) }; }
     const f = body.first || first;
     const l = body.last || last;
@@ -139,7 +142,8 @@ exports.handler = async function(event) {
   }
 
   if (method === 'DELETE') {
-    const headers = event.headers || {};
+  if (!store) return { statusCode: 503, headers: CORS, body: JSON.stringify({ ok: false, error: 'Storage not configured' }) };
+  const headers = event.headers || {};
     const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (qs.key) || (qs.admin_key) || (qs.k);
     const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '08/07/2003').trim();
     if (!ADMIN_KEY || normalize(provided) !== normalize(ADMIN_KEY)) {
