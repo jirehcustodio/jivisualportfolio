@@ -36,38 +36,64 @@
     <div id="out" class="card" style="padding:0">
       <table aria-label="Intake entries">
         <thead>
-          <tr><th>When</th><th>Name</th><th>Type</th><th>Age</th><th>School/Company</th><th>IP</th><th>Actions</th></tr>
+          <tr><th>When</th><th>Name</th><th>Type</th><th>Age</th><th>School/Company</th><th>Device</th><th>IP</th><th>Actions</th></tr>
         </thead>
-        <tbody id="rows"><tr><td class="muted" colspan="7">No data loaded</td></tr></tbody>
+        <tbody id="rows"><tr><td class="muted" colspan="8">No data loaded</td></tr></tbody>
       </table>
     </div>
   </div>
   <script>
   const fmt = (ts)=> new Date(ts).toLocaleString();
   const rows = document.getElementById('rows');
+  function parseUA(ua=''){
+    try {
+      const parts = [];
+      if (/Windows/i.test(ua)) parts.push('Windows');
+      else if (/(Macintosh|Mac OS X)/i.test(ua)) parts.push('macOS');
+      else if (/iPhone|iPad|iOS/i.test(ua)) parts.push('iOS');
+      else if (/Android/i.test(ua)) parts.push('Android');
+      else if (/Linux/i.test(ua)) parts.push('Linux');
+      if (/Edg\//i.test(ua)) parts.push('Edge');
+      else if (/OPR\//i.test(ua)) parts.push('Opera');
+      else if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) parts.push('Chrome');
+      else if (/Firefox\//i.test(ua)) parts.push('Firefox');
+      else if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) parts.push('Safari');
+      return parts.join(' · ');
+    } catch { return ''; }
+  }
+  async function fetchEntries(limit){
+    const paths = ['/api/intake/entries', '/.netlify/functions/intake/entries'];
+    let lastError = null, lastStatus = 0;
+    for (const p of paths){
+      try {
+        const u = new URL(p, location.origin);
+        if (limit) u.searchParams.set('limit', String(limit));
+        const r = await fetch(u.toString());
+        if (r.ok) return await r.json();
+        lastStatus = r.status;
+      } catch (e) { lastError = e; }
+    }
+    const errMsg = lastStatus ? `HTTP ${lastStatus}` : (lastError?.message || 'Network error');
+    throw new Error(errMsg);
+  }
   async function load() {
       const limitSel = document.getElementById('limit');
       const limit = parseInt(limitSel?.value || '25', 10) || 25;
-      rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
+      rows.innerHTML = '<tr><td class="muted" colspan="8">Loading…</td></tr>';
       try {
-        // Public endpoint now; request recent entries
-        const u = new URL('/api/intake/entries', location.origin);
-        if (limit) u.searchParams.set('limit', String(limit));
-        const r = await fetch(u.toString());
-        if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>'; return; }
-        const j = await r.json();
+        const j = await fetchEntries(limit);
         const list = Array.isArray(j.entries) ? j.entries : [];
-        if (!list.length) { rows.innerHTML = '<tr><td class="muted" colspan="7">No entries yet</td></tr>'; return; }
+        if (!list.length) { rows.innerHTML = '<tr><td class="muted" colspan="8">No entries yet</td></tr>'; return; }
         rows.innerHTML = '';
         list.forEach(e => {
           const tr = document.createElement('tr');
           const userType = e.type || e.userType || '';
           const schoolOrCompany = userType === 'student' ? (e.school || e.schoolName || '') : (e.company || e.companyName || '');
-          tr.innerHTML = `<td>${fmt(e.ts||Date.now())}</td><td>${(e.first||'')+' '+(e.last||'')}</td><td>${userType}</td><td>${e.age||''}</td><td>${schoolOrCompany}</td><td class="muted">${e.ip||''}</td><td><button data-ts="${e.ts}" class="admin-btn" style="padding:.3rem .6rem">Delete</button></td>`;
+          tr.innerHTML = `<td>${fmt(e.ts||Date.now())}</td><td>${(e.first||'')+' '+(e.last||'')}</td><td>${userType}</td><td>${e.age||''}</td><td>${schoolOrCompany}</td><td class="muted">${parseUA(e.ua||'')}</td><td class="muted">${e.ip||''}</td><td><button data-ts="${e.ts}" class="admin-btn" style="padding:.3rem .6rem">Delete</button></td>`;
           rows.appendChild(tr);
         });
       } catch (e) {
-        rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>';
+        rows.innerHTML = `<tr><td class="muted" colspan="8">Failed to load: ${e.message || ''}</td></tr>`;
       }
     }
   document.getElementById('load').addEventListener('click', load);
