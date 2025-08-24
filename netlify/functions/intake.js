@@ -7,7 +7,16 @@
 let getStore;
 let blobsOk = true;
 try {
-  ({ getStore } = require('@netlify/blobs'));
+  const blobs = require('@netlify/blobs');
+  // If explicit credentials provided, create a client manually; else rely on Netlify env
+  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || process.env.BLOBS_SITE_ID;
+  const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || process.env.BLOBS_TOKEN;
+  if (blobs.createClient && siteID && token) {
+    const client = blobs.createClient({ siteID, token });
+    getStore = client.getStore.bind(client);
+  } else {
+    getStore = blobs.getStore;
+  }
 } catch (e) {
   blobsOk = false;
 }
@@ -25,7 +34,7 @@ exports.handler = async function(event, context) {
   if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
 
   // Blobs store for this site; key 'entries.json' holds an array of records
-  const store = blobsOk ? getStore('intake') : null;
+  const store = blobsOk && typeof getStore === 'function' ? getStore('intake') : null;
   const KEY = 'entries.json';
 
   if (method === 'POST') {
@@ -76,7 +85,7 @@ exports.handler = async function(event, context) {
         return { statusCode: 200, headers: CORS, body: JSON.stringify({ entries: [] }) };
       }
     }
-    return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true }) };
+  return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, blobs: !!store }) };
   }
 
   if (method === 'DELETE') {
