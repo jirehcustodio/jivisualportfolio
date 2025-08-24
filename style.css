@@ -270,6 +270,7 @@ body {
   text-shadow: 0 1px 0 rgba(255,255,255,0.45), 1px 1px 0 rgba(127,90,240,0.35), -1px 0 0 rgba(44,182,125,0.30);
   transition: color var(--duration) var(--easing);
   display: inline-block;
+  position: relative;
   /* subtle retro pulse */
   animation: retroPulse 3.5s steps(2, jump-none) infinite;
 }
@@ -280,6 +281,43 @@ body {
 }
 /* reduce motion if Safe Mode is on */
 .safe-mode .logo-animated-text { animation: none !important; }
+
+/* CRT scanline overlay on hover */
+.logo-animated-text::after {
+  content: "";
+  position: absolute;
+  inset: -1px 0 0 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.06) 0,
+    rgba(0,0,0,0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0;
+  transition: opacity var(--duration-fast, 200ms) ease-out;
+}
+.logo-animated-text:hover::after { opacity: 0.3; animation: scanJitter 1.2s linear infinite; }
+.logo-animated-text:hover {
+  /* subtle chromatic aberration */
+  text-shadow:
+    0 1px 0 rgba(255,255,255,0.45),
+    1px 0 0 rgba(255,0,0,0.35),
+    -1px 0 0 rgba(0,128,255,0.35),
+    1px 1px 0 rgba(127,90,240,0.25),
+    -1px 0 0 rgba(44,182,125,0.22);
+}
+@keyframes scanJitter {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(0.8px); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .logo-animated-text,
+  .logo-animated-text:hover::after { animation: none !important; }
+}
 @keyframes gradientTextMove {
   0% { background-position: 0% 50%; }
   100% { background-position: 100% 50%; }
