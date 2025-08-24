@@ -1,9 +1,6 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
-
-[build.environment]
-  ADMIN_KEY = "08/07/2003"
+  publish = "portfolio"
+  functions = "portfolio/netlify/functions"
 
 [[redirects]]
   from = "/api/*"
