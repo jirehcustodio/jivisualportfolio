@@ -444,12 +444,17 @@ function resetIntakeForm() {
     if (loginBox) { loginBox.style.display = 'block'; loginBox.removeAttribute('aria-hidden'); }
     const portfolio = document.getElementById('portfolio-box');
     if (portfolio) portfolio.style.display = 'none';
-
-    // Optionally play the splash once; after splash, remain on the intake screen
-    if (!sessionStorage.getItem('splashSeen')) {
-      sessionStorage.setItem('splashSeen', 'true');
-      showSplash(900);
-    }
+  // Skip showing the splash while intake/login is visible (but do not mark it as seen),
+  // so it can still play once after a successful login.
+  // Defensive: ensure any in-flight splash flyer or hero avatar is not visible while intake is showing
+    try {
+      const fly = window.__flyAvatar && window.__flyAvatar.fly;
+      if (fly) { fly.remove(); window.__flyAvatar = null; }
+    } catch {}
+    try {
+      const heroSlot = document.getElementById('hero-avatar-slot');
+      if (heroSlot) { heroSlot.style.visibility = 'hidden'; heroSlot.innerHTML = ''; }
+    } catch {}
   }
 
   // Ensure tabs are wired even before reveal (fallback to delegation)
