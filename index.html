@@ -522,6 +522,10 @@
   <!-- Removed duplicate header -->
   <aside id="sidebar-left" class="sidebar-left" aria-label="Quick actions">
     <nav class="side-rail">
+      <button class="rail-item" id="open-settings" title="Settings" aria-label="Open settings">
+        <span class="rail-icon">⚙️</span>
+        <span class="rail-label">Settings</span>
+      </button>
       <button class="rail-item" title="Logout" aria-label="Logout" onclick="logout()">
         <img src="logoutbutton.gif" alt="" class="rail-icon-img"/>
         <span class="rail-label">Logout</span>
@@ -571,6 +575,34 @@
   <div style="margin:0.6rem 0 0.8rem;opacity:0.8;">Only entries matching your current name are shown. Delete removes your record from my server.</div>
       <div id="privacy-list" class="cmdk-list" style="max-height:50vh;overflow:auto;"></div>
       <div class="cmdk-hint">Tip: change the name above and open again to manage other entries you own.</div>
+    </div>
+  </div>
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="cmdk-overlay" aria-hidden="true" style="display:none;">
+    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Settings" style="max-width:720px;">
+      <div class="cmdk-input-wrap">
+        <div style="font-weight:800;font-size:1.2rem;">Settings</div>
+        <button id="settings-close" class="theme-toggle" style="margin-left:auto;">Close</button>
+      </div>
+      <div class="cmdk-list" style="max-height:55vh;overflow:auto;">
+        <div class="card" style="margin:0 0 1rem;">
+          <h3 style="margin-top:0">Display</h3>
+          <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;">
+            <button id="toggle-safe" class="theme-toggle">Toggle Safe Mode</button>
+            <button id="toggle-theme" class="theme-toggle">Toggle Theme</button>
+          </div>
+        </div>
+        <div class="card" style="margin:0 0 1rem;">
+          <h3 style="margin-top:0">Developer</h3>
+          <label style="display:flex;align-items:center;gap:.6rem;">
+            <input id="dev-mode-toggle" type="checkbox" /> Developer Mode
+          </label>
+          <div id="dev-links" style="margin-top:.6rem;display:none;">
+            <a href="admin.html" class="cta-btn" target="_blank" rel="noopener">Open Admin Intake Viewer</a>
+          </div>
+          <div class="cmdk-hint">Admin viewer requires your secret admin key to load data.</div>
+        </div>
+      </div>
     </div>
   </div>
   <script type="application/ld+json">

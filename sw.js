@@ -1,4 +1,4 @@
-const CACHE = 'portfolio-v9';
+const CACHE = 'portfolio-v10';
 const CORE = [
   './index.html',
   './style.css',
@@ -12,6 +12,7 @@ const CORE = [
   './demo-portfolio-site.html',
   './demo-resume-analyzer.html',
   './demo-smart-home.html'
+  , './admin.html'
 ];
 
 self.addEventListener('install', (event) => {

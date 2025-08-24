@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Intake Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .admin-wrap{max-width:960px;margin:6vh auto;padding:1rem}
+    .admin-head{display:flex;gap:.8rem;align-items:center;margin-bottom:1rem}
+    .admin-input{padding:.6rem .8rem;border:1px solid var(--card-border);border-radius:10px;width:320px}
+    .admin-btn{padding:.6rem 1rem;border:none;border-radius:10px;background:linear-gradient(90deg,#7f5af0,#2cb67d);color:#fff;font-weight:700;cursor:pointer}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--card-border);border-radius:12px;overflow:hidden}
+    th,td{padding:.6rem .8rem;border-bottom:1px solid #eee;font-size:.95rem}
+    th{background:#fafbff;text-align:left}
+    .muted{opacity:.7;font-size:.86rem}
+  </style>
+</head>
+<body>
+  <div class="admin-wrap">
+    <h2 class="hero-title" style="margin:0 0 .6rem">Admin Intake Viewer</h2>
+    <p class="muted">Enter the admin key to view and manage intake submissions.</p>
+    <div class="admin-head">
+      <input id="key" class="admin-input" type="password" placeholder="Admin key" aria-label="Admin key" />
+      <button id="load" class="admin-btn">Load Entries</button>
+    </div>
+    <div id="out" class="card" style="padding:0">
+      <table aria-label="Intake entries">
+        <thead>
+          <tr><th>When</th><th>Name</th><th>Type</th><th>Age</th><th>School/Company</th><th>IP</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="rows"><tr><td class="muted" colspan="7">No data loaded</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const fmt = (ts)=> new Date(ts).toLocaleString();
+    const rows = document.getElementById('rows');
+    async function load() {
+      const key = document.getElementById('key').value.trim();
+      rows.innerHTML = '<tr><td class="muted" colspan="7">Loading…</td></tr>';
+      try {
+        const r = await fetch('/api/intake/entries', { headers: { 'x-admin-key': key } });
+        if (!r.ok) { rows.innerHTML = '<tr><td class="muted" colspan="7">Access denied</td></tr>'; return; }
+        const j = await r.json();
+        const list = Array.isArray(j.entries) ? j.entries : [];
+        if (!list.length) { rows.innerHTML = '<tr><td class="muted" colspan="7">No entries yet</td></tr>'; return; }
+        rows.innerHTML = '';
+        list.forEach(e => {
+          const tr = document.createElement('tr');
+          const schoolOrCompany = e.userType === 'student' ? (e.schoolName||'') : (e.companyName||'');
+          tr.innerHTML = `<td>${fmt(e.ts||Date.now())}</td><td>${(e.first||'')+' '+(e.last||'')}</td><td>${e.userType||''}</td><td>${e.age||''}</td><td>${schoolOrCompany}</td><td class="muted">${e.ip||''}</td><td><button data-ts="${e.ts}" class="admin-btn" style="padding:.3rem .6rem">Delete</button></td>`;
+          rows.appendChild(tr);
+        });
+      } catch (e) {
+        rows.innerHTML = '<tr><td class="muted" colspan="7">Failed to load</td></tr>';
+      }
+    }
+    document.getElementById('load').addEventListener('click', load);
+    rows.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-ts]');
+      if (!btn) return;
+      const key = document.getElementById('key').value.trim();
+      const ts = btn.getAttribute('data-ts');
+      if (!confirm('Delete this entry?')) return;
+      const r = await fetch('/api/intake?ts='+encodeURIComponent(ts), { method: 'DELETE', headers: { 'x-admin-key': key } });
+      if (r.ok) load();
+    });
+  </script>
+</body>
+</html>

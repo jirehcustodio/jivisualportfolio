@@ -585,6 +585,62 @@ function resetIntakeForm() {
   // Add to command palette if present later
 })();
 
+// Settings modal + Developer Mode
+(function settingsPanel(){
+  window.addEventListener('DOMContentLoaded', function(){
+    const openBtn = document.getElementById('open-settings');
+    const modal = document.getElementById('settings-modal');
+    const closeBtn = document.getElementById('settings-close');
+    const devToggle = document.getElementById('dev-mode-toggle');
+    const devLinks = document.getElementById('dev-links');
+    const toggleSafe = document.getElementById('toggle-safe');
+    const toggleTheme = document.getElementById('toggle-theme');
+    const DEV_KEY = 'ux:devMode';
+
+    function syncDevUI(){
+      const on = localStorage.getItem(DEV_KEY) === 'on';
+      if (devToggle) devToggle.checked = on;
+      if (devLinks) devLinks.style.display = on ? 'block' : 'none';
+      document.documentElement.classList.toggle('dev-mode', on);
+    }
+    function open(){ if (modal) modal.style.display = 'block'; }
+    function close(){ if (modal) modal.style.display = 'none'; }
+
+    if (openBtn && !openBtn.__wired){ openBtn.__wired = true; openBtn.addEventListener('click', open); }
+    if (closeBtn && !closeBtn.__wired){ closeBtn.__wired = true; closeBtn.addEventListener('click', close); }
+    if (modal && !modal.__wired){
+      modal.__wired = true;
+      modal.addEventListener('click', (e)=>{ if (e.target === modal) close(); });
+    }
+    if (devToggle && !devToggle.__wired){
+      devToggle.__wired = true;
+      devToggle.addEventListener('change', ()=>{
+        const on = !!devToggle.checked; localStorage.setItem(DEV_KEY, on ? 'on' : 'off'); syncDevUI();
+      });
+    }
+    if (toggleSafe && !toggleSafe.__wired){
+      toggleSafe.__wired = true;
+      toggleSafe.addEventListener('click', ()=>{
+        const now = !document.documentElement.classList.contains('safe-mode');
+        document.documentElement.classList.toggle('safe-mode', now);
+        try { localStorage.setItem('ux:safeMode', now ? 'on' : 'off'); } catch {}
+      });
+    }
+    if (toggleTheme && !toggleTheme.__wired){
+      toggleTheme.__wired = true;
+      toggleTheme.addEventListener('click', ()=>{
+        const mode = document.documentElement.classList.contains('theme-ambient') ? 'pink' : 'ambient';
+        if (typeof applyTheme === 'function') applyTheme(mode);
+        localStorage.setItem('theme:mode', mode);
+        const themeBtn = document.getElementById('theme-toggle');
+        if (themeBtn) themeBtn.textContent = `Theme: ${mode === 'ambient' ? 'Ambient' : 'Pink'}`;
+      });
+    }
+    // init
+    syncDevUI();
+  });
+})();
+
 function setActiveTab(tab) {
   // Use DOM to avoid hard failures if ids change
     const tabsEl = document.querySelector('.tabs');

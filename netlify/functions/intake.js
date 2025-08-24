@@ -44,6 +44,12 @@ exports.handler = async function(event, context) {
 
   if (method === 'GET') {
     if (/\/intake\/(entries|list)$/.test(path) || path.endsWith('/intake/entries')) {
+      // Admin-only: require x-admin-key header matching process.env.ADMIN_KEY
+      const provided = event.headers?.['x-admin-key'] || event.headers?.['X-Admin-Key'];
+      const ADMIN_KEY = process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY;
+      if (!ADMIN_KEY || provided !== ADMIN_KEY) {
+        return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
+      }
       try {
         const entries = (await store.get(KEY, { type: 'json' })) || [];
         // newest first
@@ -57,6 +63,12 @@ exports.handler = async function(event, context) {
   }
 
   if (method === 'DELETE') {
+    // Admin-only
+    const provided = event.headers?.['x-admin-key'] || event.headers?.['X-Admin-Key'];
+    const ADMIN_KEY = process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY;
+    if (!ADMIN_KEY || provided !== ADMIN_KEY) {
+      return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
+    }
     // delete by timestamp query ?ts=...
     const ts = parseInt((event.queryStringParameters?.ts) || '', 10);
     if (!ts) return { statusCode: 400, headers: CORS, body: JSON.stringify({ ok: false, error: 'Missing ts' }) };
