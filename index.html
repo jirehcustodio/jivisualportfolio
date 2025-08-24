@@ -568,6 +568,10 @@
       </span>
     </div>
   </footer>
+  <!-- Build/version stamp (visible only in Developer Mode) -->
+  <div id="build-info" style="display:none;text-align:center;opacity:.6;font-size:12px;margin-top:.4rem;">
+    Build: portfolio-v11 • commit 26977b6 • 2025-08-24
+  </div>
   <button id="global-contact-cta" class="sticky-cta" aria-label="Contact me">Contact</button>
   <!-- Privacy Manager Modal -->
   <div id="privacy-modal" class="cmdk-overlay" aria-hidden="true" style="display:none;">
@@ -846,6 +850,16 @@
       const loginBtn = document.getElementById('login-btn');
       function handleEnter(e) { if (e.key === 'Enter') { loginBtn.click(); } }
       inputs.forEach(el => el && el.addEventListener('keydown', handleEnter));
+    });
+  </script>
+  <script>
+    // Show build/version info when Developer Mode is on
+    window.addEventListener('DOMContentLoaded', function(){
+      try {
+        const on = localStorage.getItem('ux:devMode') === 'on';
+        var b = document.getElementById('build-info');
+        if (b) b.style.display = on ? 'block' : 'none';
+      } catch {}
     });
   </script>
   <script>
