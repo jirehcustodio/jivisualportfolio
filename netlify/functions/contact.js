@@ -1,5 +1,6 @@
 // Contact function: accepts JSON { name, email, message, page }
-// Persists messages to Netlify Blobs and exposes an admin-protected GET for listing.
+// Persists messages to Netlify Blobs and (optionally) emails the site owner.
+// Admin-protected GET lists messages.
 
 let getStore;
 let blobsOk = true;
@@ -28,6 +29,66 @@ const CORS = {
 
 function normalize(s){ return (s==null?'':String(s)).trim().toLowerCase(); }
 function isValidEmail(s){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s||'').trim()); }
+
+// Optional email notification helper
+async function notifyByEmail(rec) {
+  try {
+    const TO = (process.env.CONTACT_TO_EMAIL || process.env.CONTACT_TO || 'jireh4401@gmail.com').trim();
+    if (!isValidEmail(TO)) return { ok: false, reason: 'no-to' };
+    const subject = `New contact from ${rec.name}`;
+    const text = `New contact submission\n\nName: ${rec.name}\nEmail: ${rec.email}\nFrom: ${rec.page || '-'}\nIP: ${rec.ip || '-'}\nUA: ${rec.ua || '-'}\nTime: ${new Date(rec.ts).toISOString()}\n\nMessage:\n${rec.message}`;
+    const html = `<h3>New contact submission</h3>
+      <p><strong>Name:</strong> ${escapeHtml(rec.name)}<br/>
+      <strong>Email:</strong> ${escapeHtml(rec.email)}<br/>
+      <strong>From:</strong> ${escapeHtml(rec.page || '-')}<br/>
+      <strong>IP:</strong> ${escapeHtml(rec.ip || '-')}<br/>
+      <strong>UA:</strong> ${escapeHtml(rec.ua || '-')}<br/>
+      <strong>Time:</strong> ${new Date(rec.ts).toISOString()}</p>
+      <pre style="white-space:pre-wrap;word-break:break-word;background:#fafafa;padding:8px;border-radius:6px;border:1px solid #eee">${escapeHtml(rec.message)}</pre>`;
+
+    // Prefer SendGrid if available
+    const SG = process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim();
+    if (SG) {
+      const FROM = (process.env.CONTACT_FROM_EMAIL || process.env.SENDGRID_FROM || 'no-reply@jivisualportfolio.com').trim();
+      const payload = {
+        personalizations: [{ to: [{ email: TO }], subject }],
+        from: { email: FROM },
+        reply_to: { email: rec.email },
+        content: [
+          { type: 'text/plain', value: text },
+          { type: 'text/html', value: html }
+        ]
+      };
+      const r = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${SG}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return { ok: r.status === 202, provider: 'sendgrid', status: r.status };
+    }
+
+    // Resend fallback if configured
+    const RESEND = process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim();
+    if (RESEND) {
+      const FROM = (process.env.RESEND_FROM || process.env.CONTACT_FROM_EMAIL || 'onboarding@resend.dev').trim();
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${RESEND}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: FROM, to: TO, reply_to: rec.email, subject, html, text })
+      });
+      const ok = r.ok;
+      return { ok, provider: 'resend', status: r.status };
+    }
+
+    return { ok: false, reason: 'no-provider' };
+  } catch (e) {
+    return { ok: false, error: 'send-failed' };
+  }
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+}
 
 exports.handler = async function(event) {
   const method = event.httpMethod || 'GET';
@@ -69,18 +130,26 @@ exports.handler = async function(event) {
     const ip = event.headers?.['x-nf-client-connection-ip'] || event.headers?.['client-ip'] || (event.headers?.['x-forwarded-for']?.split(',')[0] || '');
     const rec = { ts, name, email, message, page, ua, ip };
 
-    if (!store) {
-      // Accept but warn client storage not configured
-      return { statusCode: 202, headers: CORS, body: JSON.stringify({ ok: true, saved: false, note: 'Storage unavailable' }) };
+    // Try persist (if store available)
+    let saved = false;
+    if (store) {
+      try {
+        const existing = (await store.get(KEY, { type: 'json' })) || [];
+        existing.push(rec);
+        await store.set(KEY, JSON.stringify(existing), { contentType: 'application/json' });
+        saved = true;
+      } catch (e) {
+        // keep saved=false
+      }
     }
-    try {
-      const existing = (await store.get(KEY, { type: 'json' })) || [];
-      existing.push(rec);
-      await store.set(KEY, JSON.stringify(existing), { contentType: 'application/json' });
-      return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, saved: true, ts }) };
-    } catch (e) {
-      return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok:false, error: 'Persist failed' }) };
-    }
+    // Try email notify (best-effort, non-blocking in principle)
+    let mailed = null;
+    try { mailed = await Promise.race([notifyByEmail(rec), new Promise((resolve)=> setTimeout(() => resolve({ ok:false, timeout:true }), 1500))]); } catch {}
+
+    // Build response; status 200 if either saved or mailed ok; 202 if accepted but no backends; 500 only if explicit persist tried and failed with no email
+    const okAny = saved || (mailed && mailed.ok);
+    const status = okAny ? 200 : (store ? 500 : 202);
+    return { statusCode: status, headers: CORS, body: JSON.stringify({ ok: okAny, saved, mailed: !!(mailed && mailed.ok), ts }) };
   }
 
   if (method === 'GET') {
