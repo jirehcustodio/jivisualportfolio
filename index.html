@@ -522,7 +522,10 @@
   <!-- Trust: Testimonials -->
   <section class="home-testimonials reveal" aria-label="What people say" style="max-width:960px;margin:2rem auto;">
     <h3 style="font-weight:800;letter-spacing:1px;margin-bottom:0.8rem;">Testimonials</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+  <!-- Mount point for enhanced carousel (Preact + Motion One) -->
+  <div id="testimonials-carousel-root"></div>
+  <!-- Fallback content when JS is disabled or hydration not ready -->
+  <div id="testimonials-fallback" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
       <blockquote class="card" style="margin:0;">“Polished UX and fast turnarounds. A joy to collaborate with.”<br><small>— Product Lead</small></blockquote>
       <blockquote class="card" style="margin:0;">“Bridges AI ideas with working demos quickly. Great communicator.”<br><small>— Team Mentor</small></blockquote>
       <blockquote class="card" style="margin:0;">“Attention to detail and accessibility. Users noticed the difference.”<br><small>— QA Engineer</small></blockquote>
@@ -929,5 +932,6 @@
       });
     });
   </script>
+  <script type="module" src="./testimonials.mount.js"></script>
 </body>
 </html>
