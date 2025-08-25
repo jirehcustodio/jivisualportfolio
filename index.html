@@ -921,14 +921,25 @@
         const payload = { name: nameEl.value.trim(), email: emailEl.value.trim(), message: msgEl.value.trim(), page: location.pathname, website: document.getElementById('contact-website')?.value || '' };
         const bases = (typeof getApiBasesForNetlify === 'function') ? getApiBasesForNetlify() : [];
         let ok = false;
+        let info = null;
         for (const base of bases) {
           const u = base.replace(/\/$/, '') + '/contact';
           try {
             const r = await fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (r.ok) { ok = true; break; }
+            if (r.ok) {
+              ok = true;
+              try { info = await r.json(); } catch {}
+              break;
+            }
           } catch {}
         }
-        if (ok) { setStatus('Sent! I’ll get back to you soon.'); form.reset(); }
+        if (ok) {
+          const mailed = info && info.mailed === true;
+          const saved = info && info.saved === true;
+          const tag = mailed ? 'emailed' : (saved ? 'saved' : 'accepted');
+          setStatus(`Sent (${tag}). I’ll get back to you soon.`);
+          form.reset();
+        }
         else { setStatus('Failed to send. Please try again later.', false); }
         btn.disabled = false;
       });
