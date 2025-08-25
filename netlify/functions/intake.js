@@ -70,6 +70,14 @@ exports.handler = async function(event, context) {
       const existing = (await store.get(KEY, { type: 'json' })) || [];
       existing.push(rec);
       await store.set(KEY, JSON.stringify(existing), { contentType: 'application/json' });
+      // Optional: mirror to Firestore if configured
+      try {
+        const { getFirestore } = require('./_firebase');
+        const db = getFirestore && getFirestore();
+        if (db) {
+          await db.collection('intakeEntries').add(rec);
+        }
+      } catch {}
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, saved: true, ts }) };
     } catch (e) {
       return { statusCode: 500, headers: CORS, body: JSON.stringify({ ok: false, error: 'Persist failed' }) };

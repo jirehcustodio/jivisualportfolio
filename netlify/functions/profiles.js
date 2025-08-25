@@ -142,6 +142,14 @@ exports.handler = async function(event) {
     }
     all[key] = next;
     await saveAll(store, all);
+    // Optional: mirror to Firestore
+    try {
+      const { getFirestore } = require('./_firebase');
+      const db = getFirestore && getFirestore();
+      if (db) {
+        await db.collection('profiles').doc(key).set(next, { merge: true });
+      }
+    } catch {}
     return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, key, profile: next }) };
   }
 
