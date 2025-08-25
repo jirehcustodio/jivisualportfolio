@@ -492,8 +492,29 @@
       </div>
       <div class="tab-content" id="tab-content-contact" style="display:none;">
         <h1>Contact</h1>
-        <p>Email: your@email.com</p>
-        <p>Instagram: @yourhandle</p>
+        <form id="contact-form" class="card" style="max-width:640px">
+          <div style="display:grid;gap:.6rem;grid-template-columns:1fr 1fr;">
+            <label style="display:flex;flex-direction:column;gap:.2rem;">
+              <span style="font-weight:700;">Name</span>
+              <input id="contact-name" type="text" required placeholder="Your name" autocomplete="name"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:.2rem;">
+              <span style="font-weight:700;">Email</span>
+              <input id="contact-email" type="email" required placeholder="you@example.com" autocomplete="email"/>
+            </label>
+          </div>
+          <label style="display:flex;flex-direction:column;gap:.2rem;margin-top:.6rem;">
+            <span style="font-weight:700;">Message</span>
+            <textarea id="contact-message" required rows="5" placeholder="How can I help?"></textarea>
+          </label>
+          <!-- Honeypot field (hidden) -->
+          <input type="text" id="contact-website" name="website" style="display:none" tabindex="-1" autocomplete="off"/>
+          <div style="display:flex;gap:.6rem;align-items:center;margin-top:.8rem;">
+            <button class="cta-btn" type="submit" id="contact-send">Send</button>
+            <span id="contact-status" style="opacity:.8;"></span>
+          </div>
+        </form>
+        <div style="margin-top:1rem;opacity:.8;">Prefer socials? Instagram: @yourhandle</div>
       </div>
       
     </div>
@@ -875,6 +896,37 @@
           var sr = document.getElementById('sidebar-right'); if (sr) sr.style.display = 'none';
         }
       } catch {}
+    });
+  </script>
+  <script>
+    // Contact form wiring
+    window.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('contact-form');
+      if (!form) return;
+      const nameEl = document.getElementById('contact-name');
+      const emailEl = document.getElementById('contact-email');
+      const msgEl = document.getElementById('contact-message');
+      const status = document.getElementById('contact-status');
+      const btn = document.getElementById('contact-send');
+      function setStatus(text, ok=true){ if (!status) return; status.textContent = text; status.style.color = ok ? '#2cb67d' : '#ef4565'; }
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!nameEl.value.trim() || !emailEl.value.trim() || !msgEl.value.trim()) { setStatus('Please fill all fields.', false); return; }
+        btn.disabled = true; setStatus('Sending…', true);
+        const payload = { name: nameEl.value.trim(), email: emailEl.value.trim(), message: msgEl.value.trim(), page: location.pathname, website: document.getElementById('contact-website')?.value || '' };
+        const bases = (typeof getApiBasesForNetlify === 'function') ? getApiBasesForNetlify() : [];
+        let ok = false;
+        for (const base of bases) {
+          const u = base.replace(/\/$/, '') + '/contact';
+          try {
+            const r = await fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (r.ok) { ok = true; break; }
+          } catch {}
+        }
+        if (ok) { setStatus('Sent! I’ll get back to you soon.'); form.reset(); }
+        else { setStatus('Failed to send. Please try again later.', false); }
+        btn.disabled = false;
+      });
     });
   </script>
 </body>
