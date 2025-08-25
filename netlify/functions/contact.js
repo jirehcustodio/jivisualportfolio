@@ -49,6 +49,7 @@ async function notifyByEmail(rec) {
     // Prefer SendGrid if available
     const SG = process.env.SENDGRID_API_KEY && process.env.SENDGRID_API_KEY.trim();
     if (SG) {
+      console.log('[contact] email provider=sendgrid to=%s replyTo=%s', TO, safeEmail(rec.email));
       const FROM = (process.env.CONTACT_FROM_EMAIL || process.env.SENDGRID_FROM || 'no-reply@jivisualportfolio.com').trim();
       const payload = {
         personalizations: [{ to: [{ email: TO }], subject }],
@@ -64,12 +65,14 @@ async function notifyByEmail(rec) {
         headers: { 'Authorization': `Bearer ${SG}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      console.log('[contact] sendgrid status=%s', r.status);
       return { ok: r.status === 202, provider: 'sendgrid', status: r.status };
     }
 
     // Resend fallback if configured
     const RESEND = process.env.RESEND_API_KEY && process.env.RESEND_API_KEY.trim();
     if (RESEND) {
+      console.log('[contact] email provider=resend to=%s replyTo=%s', TO, safeEmail(rec.email));
       const FROM = (process.env.RESEND_FROM || process.env.CONTACT_FROM_EMAIL || 'onboarding@resend.dev').trim();
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -77,11 +80,13 @@ async function notifyByEmail(rec) {
         body: JSON.stringify({ from: FROM, to: TO, reply_to: rec.email, subject, html, text })
       });
       const ok = r.ok;
+      console.log('[contact] resend status=%s', r.status);
       return { ok, provider: 'resend', status: r.status };
     }
 
     return { ok: false, reason: 'no-provider' };
   } catch (e) {
+    try { console.error('[contact] email error', String(e && e.message || e)); } catch {}
     return { ok: false, error: 'send-failed' };
   }
 }
@@ -90,9 +95,19 @@ function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 }
 
+function safeEmail(e){
+  try {
+    const s = String(e||'').trim();
+    const [u, d] = s.split('@');
+    if (!d) return s.slice(0, 2) + '***';
+    return (u ? (u[0] + '***') : '***') + '@' + d;
+  } catch { return '***'; }
+}
+
 exports.handler = async function(event) {
   const method = event.httpMethod || 'GET';
   const path = event.path || '';
+  try { console.log('[contact] invoke method=%s path=%s', method, path); } catch {}
   if (method === 'OPTIONS') return { statusCode: 204, headers: CORS };
 
   // Store
@@ -129,6 +144,9 @@ exports.handler = async function(event) {
     const ua = (event.headers?.['user-agent']) || '';
     const ip = event.headers?.['x-nf-client-connection-ip'] || event.headers?.['client-ip'] || (event.headers?.['x-forwarded-for']?.split(',')[0] || '');
     const rec = { ts, name, email, message, page, ua, ip };
+    try {
+      console.log('[contact] POST name="%s" email=%s page="%s" len=%d ip=%s', name, safeEmail(email), page || '-', message.length, ip || '-');
+    } catch {}
 
     // Try persist (if store available)
     let saved = false;
@@ -138,17 +156,20 @@ exports.handler = async function(event) {
         existing.push(rec);
         await store.set(KEY, JSON.stringify(existing), { contentType: 'application/json' });
         saved = true;
+        try { console.log('[contact] saved=true total=%d', existing.length); } catch {}
       } catch (e) {
         // keep saved=false
+        try { console.error('[contact] save failed', String(e && e.message || e)); } catch {}
       }
     }
     // Try email notify (best-effort, non-blocking in principle)
     let mailed = null;
-    try { mailed = await Promise.race([notifyByEmail(rec), new Promise((resolve)=> setTimeout(() => resolve({ ok:false, timeout:true }), 1500))]); } catch {}
+    try { mailed = await Promise.race([notifyByEmail(rec), new Promise((resolve)=> setTimeout(() => resolve({ ok:false, timeout:true }), 1500))]); } catch (e) { try { console.error('[contact] notify failed', String(e && e.message || e)); } catch {} }
 
     // Build response; status 200 if either saved or mailed ok; 202 if accepted but no backends; 500 only if explicit persist tried and failed with no email
     const okAny = saved || (mailed && mailed.ok);
     const status = okAny ? 200 : (store ? 500 : 202);
+    try { console.log('[contact] result status=%d ok=%s saved=%s mailed=%s', status, String(okAny), String(saved), String(!!(mailed && mailed.ok))); } catch {}
     return { statusCode: status, headers: CORS, body: JSON.stringify({ ok: okAny, saved, mailed: !!(mailed && mailed.ok), ts }) };
   }
 
@@ -158,6 +179,7 @@ exports.handler = async function(event) {
     const provided = headers['x-admin-key'] || headers['X-Admin-Key'] || (event.queryStringParameters?.key) || (event.queryStringParameters?.admin_key);
     const ADMIN_KEY = (process.env.ADMIN_KEY || process.env.NTL_ADMIN_KEY || '08/07/2003').trim();
     if (!ADMIN_KEY || normalize(provided) !== normalize(ADMIN_KEY)) {
+      try { console.warn('[contact] GET forbidden (admin key mismatch)'); } catch {}
       return { statusCode: 403, headers: CORS, body: JSON.stringify({ ok:false, error: 'Forbidden' }) };
     }
     if (!store) return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok:true, messages: [] }) };
@@ -166,8 +188,10 @@ exports.handler = async function(event) {
       messages.sort((a,b) => (b.ts||0) - (a.ts||0));
       const limit = parseInt(event.queryStringParameters?.limit || '', 10);
       if (!isNaN(limit) && limit > 0) messages = messages.slice(0, limit);
+      try { console.log('[contact] GET ok count=%d', messages.length); } catch {}
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok:true, messages }) };
     } catch {
+      try { console.warn('[contact] GET store error, returning empty'); } catch {}
       return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok:true, messages: [] }) };
     }
   }
