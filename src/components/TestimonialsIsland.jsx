@@ -13,6 +13,7 @@ export default function TestimonialsIsland({ auto = true, intervalMs = 5000 }) {
   const safeMode = typeof document !== 'undefined' && document.documentElement.classList.contains('safe-mode');
   const prefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const reduced = safeMode || prefersReduced;
+  const pausedRef = useRef(false);
 
   useEffect(() => {
     // Hide fallback once mounted
@@ -22,7 +23,8 @@ export default function TestimonialsIsland({ auto = true, intervalMs = 5000 }) {
 
   useEffect(() => {
     if (!auto) return;
-    const t = setInterval(() => setI((p) => (p + 1) % ITEMS.length), intervalMs);
+    const tick = () => { if (!pausedRef.current) setI((p) => (p + 1) % ITEMS.length); };
+    const t = setInterval(tick, intervalMs);
     return () => clearInterval(t);
   }, [auto, intervalMs]);
 
@@ -43,10 +45,18 @@ export default function TestimonialsIsland({ auto = true, intervalMs = 5000 }) {
   }, [i]);
 
   return (
-    <div class="card" aria-roledescription="carousel" aria-label="Testimonials">
+    <div class="card" aria-roledescription="carousel" aria-label="Testimonials"
+      onMouseEnter={() => { pausedRef.current = true; }}
+      onMouseLeave={() => { pausedRef.current = false; }}
+    >
       <div ref={wrap}>
         <blockquote style="margin:0;font-size:1.05rem;line-height:1.5;">“{ITEMS[i].quote}”<br/><small>{ITEMS[i].who}</small></blockquote>
       </div>
+      <div style="display:flex;justify-content:space-between;gap:.6rem;margin-top:.6rem;align-items:center;">
+        <div style="display:flex;gap:.4rem;align-items:center;">
+          <button class="cta-btn ghost" aria-label="Previous" onClick={() => setI((i - 1 + ITEMS.length) % ITEMS.length)}>‹</button>
+          <button class="cta-btn ghost" aria-label="Next" onClick={() => setI((i + 1) % ITEMS.length)}>›</button>
+        </div>
       <div role="tablist" aria-label="Testimonials navigation" style="display:flex;gap:.4rem;margin-top:.6rem;">
         {ITEMS.map((_, idx) => (
           <button
@@ -63,6 +73,7 @@ export default function TestimonialsIsland({ auto = true, intervalMs = 5000 }) {
             }}
           />
         ))}
+      </div>
       </div>
     </div>
   );

@@ -110,7 +110,9 @@
         <div class="accent accent-2"></div>
         <div class="accent accent-3"></div>
       </div>
-  <div class="tabs">
+  <!-- Tabs island mount; fallback keeps current tabs visible until hydrated -->
+  <div id="tabs-root"></div>
+  <div id="tabs-fallback" class="tabs">
   <button class="tab active" onclick="showTab('home')" id="tab-home">Home</button>
   <button class="tab" onclick="showTab('coding')" id="tab-coding">Coding Portfolio</button>
   <button class="tab" onclick="showTab('creative')" id="tab-creative">Photography & Videography</button>
@@ -933,5 +935,6 @@
     });
   </script>
   <script type="module" src="./testimonials.mount.js"></script>
+  <script type="module" src="./tabs.mount.js"></script>
 </body>
 </html>
