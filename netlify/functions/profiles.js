@@ -75,6 +75,10 @@ exports.handler = async function(event) {
   const k = keyFor(first, last);
 
   if (method === 'GET') {
+    // Readiness: GET /profiles -> { ok, blobs }
+    if (path.endsWith('/profiles') && !/\/profiles\/(exists|get|list)$/.test(path)) {
+      return { statusCode: 200, headers: CORS, body: JSON.stringify({ ok: true, blobs: !!store }) };
+    }
     if (/\/profiles\/(exists|get|list)$/.test(path) || path.endsWith('/profiles') || path.includes('/profiles')) {
       if (path.endsWith('/profiles/exists')) {
         if (!store) return { statusCode: 200, headers: CORS, body: JSON.stringify({ exists: false, key: k, note: 'Storage not configured' }) };

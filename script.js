@@ -300,10 +300,17 @@ async function flushIntakeQueue() {
   const q = readIntakeQueue();
   if (q.length === 0) return true;
   const remained = [];
+  const bases = (typeof getApiBasesForNetlify === 'function') ? getApiBasesForNetlify() : [];
   for (const item of q) {
-    const ok1 = await tryPostIntake(item, 'http://localhost:3001/intake');
-    const ok = ok1 ? true : await tryPostIntake(item, 'http://localhost:3002/intake');
-    if (!ok) remained.push(item);
+    let sent = false;
+    for (const base of bases.concat(['http://localhost:3001', 'http://localhost:3002'])) {
+      const clean = String(base || '').replace(/\/$/, '');
+      const url = clean ? `${clean}/intake` : '';
+      if (!url) continue;
+      const ok = await tryPostIntake(item, url);
+      if (ok) { sent = true; break; }
+    }
+    if (!sent) remained.push(item);
   }
   writeIntakeQueue(remained);
   return remained.length === 0;
