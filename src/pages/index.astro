@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroIsland from '../components/HeroIsland.jsx';
+---
+<BaseLayout title="JiVisualPortfolio — Astro">
+  <main style="max-width:980px;margin:2rem auto;padding:1rem;">
+    <h1 style="font-weight:800;letter-spacing:1px;">Astro + Preact Playground</h1>
+    <p style="opacity:.85">This page is rendered by Astro and enhances interactivity with Preact islands. Your original site still serves from root files.</p>
+
+    <HeroIsland client:idle />
+
+    <section class="reveal" style="margin-top:2rem;">
+      <div class="card">
+        <h3 style="margin-top:0;">Why this setup?</h3>
+        <ul>
+          <li>Astro renders fast static HTML.</li>
+          <li>Preact powers interactive islands only where needed.</li>
+          <li>No changes to Netlify Functions or existing pages yet.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Record Login Demo</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { max-width: 680px; margin: 6vh auto; padding: 1rem; font: 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    .row { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
+    input { padding:.55rem .7rem; border:1px solid #ccc; border-radius:10px; min-width: 220px; }
+    button { padding:.55rem .9rem; border:0; border-radius:10px; background:linear-gradient(90deg,#7f5af0,#2cb67d); color:#fff; font-weight:700; cursor:pointer; }
+    pre { background:#0f0f14; color:#e6e6e6; padding:.8rem; border-radius:10px; overflow:auto; }
+  </style>
+  </head>
+<body>
+  <h2>Record Login Demo (Netlify Blobs)</h2>
+  <p>Quickly test if your Netlify Functions and Blobs storage are working.</p>
+  <div class="row" style="margin:.8rem 0 1rem">
+    <input id="username" placeholder="username or full name" />
+    <button id="btnRecord">Record Login</button>
+    <button id="btnList">List Logins</button>
+    <span id="status" style="margin-left:.6rem;opacity:.8"></span>
+  </div>
+  <h3>Output</h3>
+  <pre id="out">(nothing yet)</pre>
+  <script>
+    const out = document.getElementById('out');
+    const statusEl = document.getElementById('status');
+    const log = (v) => { out.textContent = typeof v === 'string' ? v : JSON.stringify(v, null, 2); };
+    async function recordLogin(name){
+      try {
+        statusEl.textContent = 'Posting…';
+        const r = await fetch('/.netlify/functions/record-login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: name }) });
+        const j = await r.json().catch(() => ({ ok:false, parseError:true }));
+        statusEl.textContent = `HTTP ${r.status}`;
+        log(j);
+      } catch (e) { statusEl.textContent='error'; log(String(e)); }
+    }
+    async function listLogins(){
+      try {
+        statusEl.textContent = 'Loading…';
+        const r = await fetch('/.netlify/functions/get-logins');
+        const j = await r.json().catch(() => ({ ok:false, parseError:true }));
+        statusEl.textContent = `HTTP ${r.status}`;
+        log(j);
+      } catch (e) { statusEl.textContent='error'; log(String(e)); }
+    }
+    document.getElementById('btnRecord').onclick = () => {
+      const name = (document.getElementById('username').value || '').trim() || 'guest';
+      recordLogin(name);
+    };
+    document.getElementById('btnList').onclick = () => listLogins();
+  </script>
+</body>
+</html>

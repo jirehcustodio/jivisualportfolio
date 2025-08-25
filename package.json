@@ -5,6 +5,14 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@netlify/blobs": "^6.5.0"
+    "@netlify/blobs": "^6.5.0",
+    "astro": "^4.15.0",
+    "@astrojs/preact": "^3.5.0",
+    "preact": "^10.24.0"
+  },
+  "scripts": {
+    "dev": "astro dev --root . --port 4321",
+    "build": "astro build --root .",
+    "preview": "astro preview --root ."
   }
 }
