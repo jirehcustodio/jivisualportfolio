@@ -211,7 +211,7 @@ body {
   background: rgba(127,90,240,0.08);
   transform: translateY(-1px);
 }
-.tab:focus-visible { outline: 3px solid #7f5af033; }
+.tab:focus-visible { outline: 3px solid #7f5af0; outline-offset: 2px; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #7f5af033; }
 .tab.active {
   color: #fff;
 }
@@ -910,6 +910,26 @@ body {
 :focus-visible {
   outline: 3px solid var(--brand-accent);
   outline-offset: 2px;
+}
+
+/* Carousel navigation dots */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: var(--brand-primary, #7f5af0);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: transform var(--duration-fast), opacity var(--duration-fast), box-shadow var(--duration-fast);
+}
+.dot:hover { opacity: 0.7; transform: scale(1.08); }
+.dot.active { opacity: 1; }
+.dot:focus-visible {
+  outline: 3px solid var(--brand-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2cb67d55;
+  transform: scale(1.14);
 }
 
 /* Icon-only Portfolio Grid */
