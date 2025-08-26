@@ -1018,7 +1018,7 @@ window.addEventListener('resize', () => requestAnimationFrame(updateTabsIndicato
 // Magnetic hover: elements move slightly toward cursor
 (function magneticHover() {
   window.addEventListener('DOMContentLoaded', function() {
-    const items = Array.from(document.querySelectorAll('.cta-btn, .panel-tile, .project-icon-card, .tab'));
+  const items = Array.from(document.querySelectorAll('.cta-btn, .panel-tile, .project-icon-card, .tab, .pixel-pet'));
   if (document.documentElement.classList.contains('safe-mode')) return;
     items.forEach(el => {
       el.classList.add('magnetic');
@@ -1037,6 +1037,10 @@ window.addEventListener('resize', () => requestAnimationFrame(updateTabsIndicato
       el.addEventListener('mouseleave', reset);
       el.addEventListener('blur', reset);
       el.addEventListener('touchend', reset, { passive: true });
+      // Remove scroll delay for pixel pet: update instantly on scroll
+      if (el.classList.contains('pixel-pet')) {
+        window.addEventListener('scroll', reset, { passive: true });
+      }
     });
   });
 })();
