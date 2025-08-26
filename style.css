@@ -788,7 +788,9 @@ body {
   box-shadow: 0 8px 30px rgba(127,90,240,0.12), 0 12px 40px rgba(239,69,101,0.08);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  padding: 1.2rem 1rem 1.1rem;
+  padding: 0.8rem 0.7rem 0.7rem;
+  max-width: 320px;
+  min-width: 200px;
   transition: transform var(--duration), box-shadow var(--duration), background var(--duration);
   border: 1px solid rgba(255,255,255,0.6);
   overflow: hidden;
@@ -872,8 +874,10 @@ body {
 .panel-tile {
   display: grid;
   place-items: center;
-  padding: 1.2rem;
-  border-radius: 16px;
+  padding: 0.5rem;
+  width: 110px;
+  height: 110px;
+  aspect-ratio: 1/1;
   border: 1px solid var(--card-border);
   background: rgba(255,255,255,0.6);
   box-shadow: var(--shadow-s);
@@ -1323,7 +1327,7 @@ a:hover { text-decoration-color: rgba(0,0,0,0.5); }
 .mode-8bit {
   image-rendering: pixelated;
 }
-.mode-8bit :where(body, body *, .tabs, .main-header, .card, .cta-btn, .tab, .logo, .hero-title, .hero-subtitle, .stat-number, .stat-label) {
+.mode-8bit :where(body, .tabs, .main-header, .card, .cta-btn, .tab, .logo, .hero-title, .hero-subtitle, .stat-number, .stat-label) {
   font-family: 'Press Start 2P', 'Silkscreen', monospace !important;
   letter-spacing: 0.5px;
 }
