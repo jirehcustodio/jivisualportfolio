@@ -128,27 +128,56 @@
                 <div class="hero-header-row">
                   <div id="hero-avatar-slot" class="hero-avatar-slot" aria-hidden="true"></div>
                   <div class="hero-header-text">
-                    <h1 class="hero-title"><span class="hero-accent">Jireh</span> Custodio</h1>
-                    <p class="hero-subtitle">Engineer · Safety Officer 2 · CCSA — AI, IoT, and premium web UX.</p>
-                    <section class="tech-stack-card card" style="margin-top:1.1rem;">
-                      <h3 style="margin-bottom:0.5rem;">Tech Stack & Tools</h3>
-                      <ul style="list-style:none;padding:0;font-size:1rem;line-height:1.7;">
-                        <li><strong>Frontend:</strong> HTML, CSS, JavaScript, Preact, Motion One, Lenis, Astro (scaffold)</li>
-                        <li><strong>Backend:</strong> Netlify Functions (Node.js), Netlify Blobs, optional Firebase Firestore</li>
-                        <li><strong>Frameworks:</strong> Astro, Preact, Node.js</li>
-                        <li><strong>Database/Storage:</strong> Netlify Blobs, optional Firestore</li>
-                        <li><strong>Other Tools:</strong> SendGrid/Resend (email), Service Worker (PWA), GitHub, Google Fonts</li>
-                        <li><strong>Hosting:</strong> Netlify</li>
+                    <h1 class="hero-title" style="font-size:2.1rem;margin-bottom:0.3rem;"><span class="hero-accent">Jireh</span> Custodio</h1>
+                    <p class="hero-subtitle" style="font-size:1.02rem;margin-bottom:0.7rem;">Engineer · Safety Officer 2 · CCSA</p>
+                    <div class="card-section" style="margin-bottom:0.6rem;padding-bottom:0.3rem;border-bottom:1px solid #ececec;">
+                      <span class="card-highlight">AI, IoT, Premium Web UX</span>
+                    </div>
+                    <div class="card-section" style="margin-bottom:0.6rem;padding-bottom:0.3rem;border-bottom:1px solid #ececec;">
+                      <ul class="card-list" style="font-size:0.98rem;gap:0.7rem 1.2rem;">
+                        <li>Engineer</li>
+                        <li>Safety Officer 2</li>
+                        <li>CCSA</li>
+                        <li>Web Developer</li>
+                        <li>AI/IoT Builder</li>
                       </ul>
-                    </section>
+                    </div>
+                    <div class="card-section" style="margin-bottom:0.6rem;padding-bottom:0.3rem;border-bottom:1px solid #ececec;">
+                      <strong style="color:#7f5af0;font-weight:700;">What I do:</strong>
+                      <span style="font-size:0.98rem;">Build premium, accessible web apps and dashboards with AI, IoT, and modern UX.</span>
+                    </div>
+                    <div class="card-section" style="margin-bottom:0.6rem;padding-bottom:0.3rem;border-bottom:1px solid #ececec;">
+                      <strong style="color:#2cb67d;font-weight:700;">Recent:</strong>
+                      <span style="font-size:0.98rem;">Portfolio site (PWA, Netlify Functions), AI Resume Analyzer, Smart Home Dashboard, Air Quality Monitor.</span>
+                    </div>
+                    <div class="card-section" style="margin-bottom:0.6rem;padding-bottom:0.3rem;border-bottom:1px solid #ececec;">
+                      <strong style="color:#ef4565;font-weight:700;">Tech Stack:</strong>
+                      <div class="card-tech" style="margin-top:0.3rem;">
+                        <span class="tech-chip">HTML</span>
+                        <span class="tech-chip">CSS</span>
+                        <span class="tech-chip">JavaScript</span>
+                        <span class="tech-chip">Preact</span>
+                        <span class="tech-chip">Motion One</span>
+                        <span class="tech-chip">Lenis</span>
+                        <span class="tech-chip">Astro</span>
+                      </div>
+                    </div>
+                    <div class="card-section" style="margin-bottom:0.2rem;">
+                      <strong style="color:#232526;font-weight:700;">Tools:</strong>
+                      <div class="card-tech" style="margin-top:0.3rem;">
+                        <span class="tech-chip">Netlify Functions</span>
+                        <span class="tech-chip">Netlify Blobs</span>
+                        <span class="tech-chip">Firebase Firestore</span>
+                        <span class="tech-chip">SendGrid</span>
+                        <span class="tech-chip">Resend</span>
+                        <span class="tech-chip">Service Worker</span>
+                        <span class="tech-chip">GitHub</span>
+                        <span class="tech-chip">Google Fonts</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <ul class="tag-chips" aria-label="Key skills">
-                  <li class="chip">Python</li>
-                  <li class="chip">React</li>
-                  <li class="chip">Node.js</li>
-                  <li class="chip">IoT</li>
-                </ul>
+                <!-- Minimalist tag chips moved to logo wall below -->
                 <ul class="hero-quick" aria-label="Quick highlights">
                   <li><strong>What I do:</strong> Build premium, accessible web apps and dashboards with AI, IoT, and modern UX.</li>
                   <li><strong>Recent:</strong> Portfolio site (PWA, Netlify Functions), AI Resume Analyzer, Smart Home Dashboard, Air Quality Monitor.</li>
@@ -156,7 +185,6 @@
                 <div class="hero-cta">
                   <a href="#" id="explore-work" class="cta-btn">Explore Work</a>
                   <a href="#" id="cta-about" class="cta-btn ghost">My Info</a>
-                  <a href="#" id="download-resume" class="cta-btn" aria-disabled="true" title="Under maintenance">Download Resume (Under Maintenance)</a>
                 </div>
               </div>
             </div>
@@ -422,14 +450,23 @@
         </section>
         <!-- Logo wall / tools -->
   <section class="home-logo-wall reveal scrub" aria-label="Tools I use">
-          <h3 class="logo-wall-title">Tools & Tech</h3>
+          <h3 class="logo-wall-title">Tech & Tools</h3>
           <div class="logo-wall">
-            <span class="logo-badge">Python</span>
-            <span class="logo-badge">React</span>
-            <span class="logo-badge">Node.js</span>
-            <span class="logo-badge">Express</span>
-            <span class="logo-badge">Multer</span>
-            <span class="logo-badge">Hugging Face</span>
+            <span class="logo-badge">HTML</span>
+            <span class="logo-badge">CSS</span>
+            <span class="logo-badge">JavaScript</span>
+            <span class="logo-badge">Preact</span>
+            <span class="logo-badge">Motion One</span>
+            <span class="logo-badge">Lenis</span>
+            <span class="logo-badge">Astro</span>
+            <span class="logo-badge">Netlify Functions</span>
+            <span class="logo-badge">Netlify Blobs</span>
+            <span class="logo-badge">Firebase Firestore</span>
+            <span class="logo-badge">SendGrid</span>
+            <span class="logo-badge">Resend</span>
+            <span class="logo-badge">Service Worker</span>
+            <span class="logo-badge">GitHub</span>
+            <span class="logo-badge">Google Fonts</span>
             <img src="resume%20analyzer%20logo.png" alt="Resume Analyzer" class="logo-img-badge" loading="lazy" decoding="async"/>
             <img src="websitelogo.png" alt="Portfolio" class="logo-img-badge" loading="lazy" decoding="async"/>
           </div>
