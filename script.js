@@ -57,6 +57,98 @@ function updateLoaderBgFromGif() {
 }
 // Apply once DOM is ready
 window.addEventListener('DOMContentLoaded', updateLoaderBgFromGif);
+// --- Feedback Form & Star Rating Logic ---
+window.addEventListener('DOMContentLoaded', function() {
+  // Feedback form elements
+  const form = document.getElementById('feedback-form');
+  const starsWrap = document.getElementById('star-rating');
+  const status = document.getElementById('feedback-status');
+  const ratingsSummary = document.getElementById('ratings-summary');
+  let selectedStars = 0;
+
+  // Star rating UI
+  if (starsWrap) {
+    const stars = Array.from(starsWrap.querySelectorAll('.star'));
+    function updateStars(n) {
+      stars.forEach((star, i) => {
+        star.textContent = i < n ? '★' : '☆';
+        star.style.color = i < n ? '#ffd400' : '#bbb';
+      });
+    }
+    stars.forEach((star, i) => {
+      star.addEventListener('click', () => {
+        selectedStars = i + 1;
+        updateStars(selectedStars);
+      });
+      star.addEventListener('mouseenter', () => updateStars(i + 1));
+      star.addEventListener('mouseleave', () => updateStars(selectedStars));
+    });
+    updateStars(selectedStars);
+  }
+
+  // Feedback form submit
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const text = document.getElementById('feedback-text').value.trim();
+      if (!text || selectedStars < 1 || selectedStars > 5) {
+        status.textContent = 'Please enter feedback and select a rating.';
+        status.style.color = '#ef4565';
+        return;
+      }
+      status.textContent = 'Sending...';
+      status.style.color = '#232526';
+      try {
+        const res = await fetch('/.netlify/functions/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, stars: selectedStars })
+        });
+        if (res.ok) {
+          status.textContent = 'Thank you for your feedback!';
+          status.style.color = '#2cb67d';
+          form.reset();
+          selectedStars = 0;
+          updateStars(selectedStars);
+          loadFeedbacks();
+        } else {
+          status.textContent = 'Failed to send. Please try again.';
+          status.style.color = '#ef4565';
+        }
+      } catch {
+        status.textContent = 'Network error. Please try again.';
+        status.style.color = '#ef4565';
+      }
+    });
+  }
+
+  // Load and display feedbacks and ratings summary
+  async function loadFeedbacks() {
+    if (!ratingsSummary) return;
+    try {
+      const res = await fetch('/.netlify/functions/feedback');
+      if (!res.ok) throw new Error('Failed to load');
+      const { feedbacks } = await res.json();
+      if (!Array.isArray(feedbacks)) return;
+      // Ratings summary
+      const total = feedbacks.length;
+      const avg = total ? (feedbacks.reduce((a, f) => a + (f.stars || 0), 0) / total).toFixed(2) : '—';
+      let summary = `<div style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;">Average Rating: <span style="color:#ffd400;font-size:1.2rem;">${avg}</span> / 5 (${total} feedback${total!==1?'s':''})</div>`;
+      summary += '<div style="text-align:left;margin-top:1.2rem;">';
+      feedbacks.slice(-5).reverse().forEach(f => {
+        summary += `<div style="margin-bottom:1.1rem;padding-bottom:0.7rem;border-bottom:1px solid #eee;">
+          <span style="color:#ffd400;font-size:1.1rem;">${'★'.repeat(f.stars)}${'☆'.repeat(5-f.stars)}</span>
+          <span style="margin-left:0.7rem;">${f.text}</span>
+        </div>`;
+      });
+      summary += '</div>';
+      ratingsSummary.innerHTML = summary;
+    } catch {
+      ratingsSummary.innerHTML = '<span style="color:#ef4565;">Could not load feedbacks.</span>';
+    }
+  }
+  loadFeedbacks();
+});
 
 // New Intake Flow
 async function submitIntake() {
