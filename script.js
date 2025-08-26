@@ -1039,7 +1039,9 @@ window.addEventListener('resize', () => requestAnimationFrame(updateTabsIndicato
       el.addEventListener('touchend', reset, { passive: true });
       // Remove scroll delay for pixel pet: update instantly on scroll
       if (el.classList.contains('pixel-pet')) {
-        window.addEventListener('scroll', reset, { passive: true });
+        window.addEventListener('scroll', () => {
+          el.style.transform = '';
+        }, { passive: true });
       }
     });
   });
