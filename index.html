@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gen Z Portfolio</title>
+  <title>JiVisualPortfolio — jivisualportfolio.com</title>
   <meta name="description" content="Jireh Custodio — Engineer, Safety Officer 2, CCSA. AI + IoT projects with clean, fast UX.">
-  <link rel="canonical" href="https://example.com/">
-  <meta property="og:title" content="Jireh Custodio — Portfolio">
+  <link rel="canonical" href="https://jivisualportfolio.com/">
+  <meta property="og:title" content="JiVisualPortfolio — Jireh Custodio">
   <meta property="og:description" content="AI + IoT projects • Smart Home • AI Resume Analyzer • Fast, clean UX.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://example.com/">
+  <meta property="og:url" content="https://jivisualportfolio.com/">
   <meta property="og:image" content="websitelogo.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Jireh Custodio — Portfolio">
+  <meta name="twitter:title" content="JiVisualPortfolio — Jireh Custodio">
   <meta name="twitter:description" content="AI + IoT projects • Smart Home • AI Resume Analyzer • Fast, clean UX.">
   <meta name="twitter:image" content="websitelogo.png">
-  <link rel="icon" href="websitelogo.png" sizes="32x32">
+  <!-- Tab icon: use profile GIF as favicon with PNG fallback -->
+  <link rel="icon" type="image/gif" href="idle_animation.gif">
+  <link rel="icon" type="image/png" href="websitelogo.png" sizes="32x32">
+  <!-- Safari/Apple touch icon (PNG recommended) -->
   <link rel="apple-touch-icon" href="websitelogo.png" sizes="180x180">
-  <link rel="preconnect" href="http://localhost:3001">
+  <!-- Prefer same-origin /api in production; preconnect to localhost only for dev -->
+  <!-- <link rel="preconnect" href="http://localhost:3001"> -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
@@ -28,6 +32,8 @@
   <link rel="preload" as="image" href="idle_animation.gif">
   <link rel="preload" as="image" href="loadinghome .gif">
   <meta name="theme-color" content="#7f5af0">
+  <meta name="application-name" content="JiVisualPortfolio">
+  <meta name="apple-mobile-web-app-title" content="JiVisualPortfolio">
 </head>
   <body>
   <a href="#main" class="skip-link">Skip to content</a>
@@ -72,13 +78,8 @@
   </div>
   <header class="main-header">
     <div class="logo" id="header-logo" style="display:block; animation: logoPop 1.2s cubic-bezier(.77,0,.18,1);">
-      <span class="logo-svg" aria-label="logo" style="animation: logoSpin 2.5s linear infinite;">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" stroke="#232526" stroke-width="2" fill="#fff"/>
-          <path d="M10 20 Q16 10 22 20" stroke="#414345" stroke-width="2" fill="none"/>
-          <circle cx="16" cy="16" r="3" fill="#232526"/>
-        </svg>
-      </span> <span class="logo-animated-text">Jireh's Safe Place</span>
+      <img class="logo-img" src="PortfolioLogoHeader.png" alt="Portpoolyo by Jireh logo" />
+      <span class="logo-animated-text">Portpoolyo by Jireh</span>
     </div>
     <div class="header-actions">
       <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" title="Toggle theme">Theme: Pink</button>
@@ -100,7 +101,7 @@
   <input type="text" id="company-name" class="conditional" placeholder="Company name" autocomplete="organization">
   <button onclick="submitIntake()" id="login-btn">Continue</button>
   <p id="login-error" class="error"></p>
-  <p class="consent-copy" style="font-size:0.9rem;opacity:0.8;margin-top:0.4rem;">By continuing, your name and details are saved locally and to my Resume backend so I can greet returning visitors. You can view or delete entries anytime.</p>
+  <p class="consent-copy" style="font-size:0.9rem;opacity:0.8;margin-top:0.4rem;">Welcome! Your name and details will be saved on your device, and optionally on my server so I can greet returning visitors. You can view or delete your info anytime.</p>
   <button id="manage-data-btn" class="cta-btn ghost" style="margin-top:0.5rem;">Manage my data</button>
     </div>
     <div class="portfolio" id="portfolio-box" style="display:none;">
@@ -109,7 +110,9 @@
         <div class="accent accent-2"></div>
         <div class="accent accent-3"></div>
       </div>
-  <div class="tabs">
+  <!-- Tabs island mount; fallback keeps current tabs visible until hydrated -->
+  <div id="tabs-root"></div>
+  <div id="tabs-fallback" class="tabs">
   <button class="tab active" onclick="showTab('home')" id="tab-home">Home</button>
   <button class="tab" onclick="showTab('coding')" id="tab-coding">Coding Portfolio</button>
   <button class="tab" onclick="showTab('creative')" id="tab-creative">Photography & Videography</button>
@@ -125,24 +128,18 @@
                 <div class="hero-header-row">
                   <div id="hero-avatar-slot" class="hero-avatar-slot" aria-hidden="true"></div>
                   <div class="hero-header-text">
-                    <h1 class="hero-title"><span class="hero-accent">Jireh</span> Custodio</h1>
-                    <p class="hero-subtitle">Engineer • Safety Officer 2 • CCSA — AI + IoT, clean and fast UX.</p>
+                    <h1 class="hero-title" style="font-size:2.1rem;margin-bottom:0.3rem;"><span class="hero-accent">Jireh</span> Custodio</h1>
+                    <p class="hero-subtitle" style="font-size:1.02rem;margin-bottom:0.7rem;">Engineer · Safety Officer 2 · CCSA</p>
                   </div>
                 </div>
-                <ul class="tag-chips" aria-label="Key skills">
-                  <li class="chip">Python</li>
-                  <li class="chip">React</li>
-                  <li class="chip">Node.js</li>
-                  <li class="chip">IoT</li>
-                </ul>
+                <!-- Minimalist tag chips moved to logo wall below -->
                 <ul class="hero-quick" aria-label="Quick highlights">
-                  <li><strong>What I do:</strong> AI + IoT systems, polished UIs.</li>
-                  <li><strong>Recent:</strong> Smart Home Dashboard, AI Resume Analyzer, Portfolio Site.</li>
+                  <li><strong>What I do:</strong> Build premium, accessible web apps and dashboards with AI, IoT, and modern UX.</li>
+                  <li><strong>Recent:</strong> Portfolio site (PWA, Netlify Functions), AI Resume Analyzer, Smart Home Dashboard, Air Quality Monitor.</li>
                 </ul>
                 <div class="hero-cta">
                   <a href="#" id="explore-work" class="cta-btn">Explore Work</a>
                   <a href="#" id="cta-about" class="cta-btn ghost">My Info</a>
-                  <a href="resume.pdf" id="download-resume" class="cta-btn" download>Download Resume</a>
                 </div>
               </div>
             </div>
@@ -176,17 +173,56 @@
             </aside>
           </div>
         </section>
+        <!-- Info Cards: What I do, Recent, Tech Stack, Tools -->
+        <section aria-label="Profile Info" style="max-width:960px;margin:1.5rem auto 0;">
+          <div class="home-info-cards reveal">
+            <div class="card">
+              <strong style="color:#7f5af0;font-weight:700;">What I do:</strong>
+              <div style="font-size:0.98rem;margin-top:0.2rem;">Build premium, accessible web apps and dashboards with AI, IoT, and modern UX.</div>
+            </div>
+            <div class="card">
+              <strong style="color:#2cb67d;font-weight:700;">Recent:</strong>
+              <div style="font-size:0.98rem;margin-top:0.2rem;">Portfolio site (PWA, Netlify Functions), AI Resume Analyzer, Smart Home Dashboard, Air Quality Monitor.</div>
+            </div>
+            <div class="card">
+              <strong style="color:#ef4565;font-weight:700;">Tech Stack:</strong>
+              <div class="card-tech" style="margin-top:0.3rem;">
+                <span class="tech-chip">HTML</span>
+                <span class="tech-chip">CSS</span>
+                <span class="tech-chip">JavaScript</span>
+                <span class="tech-chip">Preact</span>
+                <span class="tech-chip">Motion One</span>
+                <span class="tech-chip">Lenis</span>
+                <span class="tech-chip">Astro</span>
+              </div>
+            </div>
+            <div class="card">
+              <strong style="color:#232526;font-weight:700;">Tools:</strong>
+              <div class="card-tech" style="margin-top:0.3rem;">
+                <span class="tech-chip">Netlify Functions</span>
+                <span class="tech-chip">Netlify Blobs</span>
+                <span class="tech-chip">Firebase Firestore</span>
+                <span class="tech-chip">SendGrid</span>
+                <span class="tech-chip">Resend</span>
+                <span class="tech-chip">Service Worker</span>
+                <span class="tech-chip">GitHub</span>
+                <span class="tech-chip">Google Fonts</span>
+              </div>
+            </div>
+          </div>
+        </section>
         <!-- Stats strip -->
         <section class="home-stats" aria-label="Key highlights">
           <div class="stat-grid">
             <div class="stat-card reveal bounce">
-              <div class="stat-number">3</div>
+              <div class="stat-number">8</div>
               <div class="stat-label">Featured Projects</div>
             </div>
             <div class="stat-card reveal bounce">
-              <div class="stat-number">2</div>
+                <div class="stat-number">28</div>
               <div class="stat-label">Certifications</div>
             </div>
+            
             <div class="stat-card reveal bounce">
               <div class="stat-number">5+</div>
               <div class="stat-label">Core Skills</div>
@@ -406,19 +442,6 @@
           </div>
         </section>
         <!-- Logo wall / tools -->
-  <section class="home-logo-wall reveal scrub" aria-label="Tools I use">
-          <h3 class="logo-wall-title">Tools & Tech</h3>
-          <div class="logo-wall">
-            <span class="logo-badge">Python</span>
-            <span class="logo-badge">React</span>
-            <span class="logo-badge">Node.js</span>
-            <span class="logo-badge">Express</span>
-            <span class="logo-badge">Multer</span>
-            <span class="logo-badge">Hugging Face</span>
-            <img src="resume%20analyzer%20logo.png" alt="Resume Analyzer" class="logo-img-badge" loading="lazy" decoding="async"/>
-            <img src="websitelogo.png" alt="Portfolio" class="logo-img-badge" loading="lazy" decoding="async"/>
-          </div>
-        </section>
       </div>
       <div class="tab-content" id="tab-content-coding" style="display:none;">
         <h1>Coding Portfolio</h1>
@@ -490,8 +513,29 @@
       </div>
       <div class="tab-content" id="tab-content-contact" style="display:none;">
         <h1>Contact</h1>
-        <p>Email: your@email.com</p>
-        <p>Instagram: @yourhandle</p>
+        <form id="contact-form" class="card" style="max-width:640px">
+          <div style="display:grid;gap:.6rem;grid-template-columns:1fr 1fr;">
+            <label style="display:flex;flex-direction:column;gap:.2rem;">
+              <span style="font-weight:700;">Name</span>
+              <input id="contact-name" type="text" required placeholder="Your name" autocomplete="name"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:.2rem;">
+              <span style="font-weight:700;">Email</span>
+              <input id="contact-email" type="email" required placeholder="you@example.com" autocomplete="email"/>
+            </label>
+          </div>
+          <label style="display:flex;flex-direction:column;gap:.2rem;margin-top:.6rem;">
+            <span style="font-weight:700;">Message</span>
+            <textarea id="contact-message" required rows="5" placeholder="How can I help?"></textarea>
+          </label>
+          <!-- Honeypot field (hidden) -->
+          <input type="text" id="contact-website" name="website" style="display:none" tabindex="-1" autocomplete="off"/>
+          <div style="display:flex;gap:.6rem;align-items:center;margin-top:.8rem;">
+            <button class="cta-btn" type="submit" id="contact-send">Send</button>
+            <span id="contact-status" style="opacity:.8;"></span>
+          </div>
+        </form>
+        <div style="margin-top:1rem;opacity:.8;">Prefer socials? Instagram: @yourhandle</div>
       </div>
       
     </div>
@@ -499,11 +543,35 @@
   <!-- Trust: Testimonials -->
   <section class="home-testimonials reveal" aria-label="What people say" style="max-width:960px;margin:2rem auto;">
     <h3 style="font-weight:800;letter-spacing:1px;margin-bottom:0.8rem;">Testimonials</h3>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
+  <!-- Mount point for enhanced carousel (Preact + Motion One) -->
+  <div id="testimonials-carousel-root"></div>
+  <!-- Fallback content when JS is disabled or hydration not ready -->
+  <div id="testimonials-fallback" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;">
       <blockquote class="card" style="margin:0;">“Polished UX and fast turnarounds. A joy to collaborate with.”<br><small>— Product Lead</small></blockquote>
       <blockquote class="card" style="margin:0;">“Bridges AI ideas with working demos quickly. Great communicator.”<br><small>— Team Mentor</small></blockquote>
       <blockquote class="card" style="margin:0;">“Attention to detail and accessibility. Users noticed the difference.”<br><small>— QA Engineer</small></blockquote>
     </div>
+    <!-- Feedback Form -->
+    <div class="card" style="margin-top:2rem;padding:1.2rem 1rem;max-width:480px;margin-inline:auto;">
+      <h4 style="margin-bottom:0.7rem;font-weight:700;">Leave a Feedback</h4>
+      <form id="feedback-form" autocomplete="off">
+        <textarea id="feedback-text" rows="3" style="width:100%;border-radius:8px;padding:0.7rem;margin-bottom:0.7rem;resize:vertical;" placeholder="Your feedback..."></textarea>
+        <div style="margin-bottom:0.7rem;">
+          <span style="font-weight:600;">Your Rating:</span>
+          <span id="star-rating" style="margin-left:0.5rem;font-size:1.3rem;cursor:pointer;">
+            <span class="star" data-star="1">☆</span>
+            <span class="star" data-star="2">☆</span>
+            <span class="star" data-star="3">☆</span>
+            <span class="star" data-star="4">☆</span>
+            <span class="star" data-star="5">☆</span>
+          </span>
+        </div>
+        <button type="submit" class="cta-btn" style="margin-top:0.5rem;">Submit Feedback</button>
+        <div id="feedback-status" style="margin-top:0.7rem;font-size:0.98rem;color:#2cb67d;"></div>
+      </form>
+    </div>
+    <!-- Ratings Summary -->
+    <div id="ratings-summary" style="margin:2rem auto 0;max-width:480px;text-align:center;"></div>
   </section>
   <!-- Observability: Live metrics snapshot -->
   <section class="home-metrics reveal" aria-label="Live metrics" style="max-width:960px;margin:2rem auto;">
@@ -520,6 +588,10 @@
   <!-- Removed duplicate header -->
   <aside id="sidebar-left" class="sidebar-left" aria-label="Quick actions">
     <nav class="side-rail">
+      <button class="rail-item" id="open-settings" title="Settings (Theme & Dev)" aria-label="Open settings (Theme & Developer Mode)">
+        <span class="rail-icon">⚙️</span>
+        <span class="rail-label">Settings</span>
+      </button>
       <button class="rail-item" title="Logout" aria-label="Logout" onclick="logout()">
         <img src="logoutbutton.gif" alt="" class="rail-icon-img"/>
         <span class="rail-label">Logout</span>
@@ -541,6 +613,10 @@
   <!-- Right Sidebar: Pet -->
   <aside id="sidebar-right" class="sidebar-right" aria-label="Pet actions">
     <nav class="side-rail">
+      <button class="rail-item" id="open-settings-right" title="Settings" aria-label="Open settings">
+        <span class="rail-icon">⚙️</span>
+        <span class="rail-label">Settings</span>
+      </button>
       <div id="pixel-pet" class="pixel-pet" role="button" aria-label="Pixel Pet" title="Pixel Pet — click to cheer!">
         <span class="pet-emoji" aria-hidden="true">🐥</span>
         <span class="lv-badge" aria-hidden="true">Lv1</span>
@@ -551,13 +627,17 @@
   </aside>
   <footer class="main-footer">
     <div class="footer-content">
-      <span>Made with <span style="color:#ef4565">♥</span> for Gen Z &mdash; 2025</span>
+  <span>Made with <span style="color:#ef4565">♥</span> &mdash; 2025</span>
       <span class="footer-social">
   <a href="https://www.instagram.com/ji_cstd/" target="_blank">Instagram</a> &bull; 
         <a href="mailto:your@email.com">Email</a>
       </span>
     </div>
   </footer>
+  <!-- Build/version stamp (visible only in Developer Mode) -->
+  <div id="build-info" style="display:none;text-align:center;opacity:.6;font-size:12px;margin-top:.4rem;">
+    Build: portfolio-v11 • commit 26977b6 • 2025-08-24
+  </div>
   <button id="global-contact-cta" class="sticky-cta" aria-label="Contact me">Contact</button>
   <!-- Privacy Manager Modal -->
   <div id="privacy-modal" class="cmdk-overlay" aria-hidden="true" style="display:none;">
@@ -566,9 +646,37 @@
         <div style="font-weight:800;font-size:1.2rem;">Manage my data</div>
         <button id="privacy-close" class="theme-toggle" style="margin-left:auto;">Close</button>
       </div>
-      <div style="margin:0.6rem 0 0.8rem;opacity:0.8;">Only entries matching your current name are shown. Delete removes the record from the server CSV.</div>
+  <div style="margin:0.6rem 0 0.8rem;opacity:0.8;">Only entries matching your current name are shown. Delete removes your record from my server.</div>
       <div id="privacy-list" class="cmdk-list" style="max-height:50vh;overflow:auto;"></div>
       <div class="cmdk-hint">Tip: change the name above and open again to manage other entries you own.</div>
+    </div>
+  </div>
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="cmdk-overlay" aria-hidden="true" style="display:none;">
+    <div class="cmdk-panel" role="dialog" aria-modal="true" aria-label="Settings" style="max-width:720px;">
+      <div class="cmdk-input-wrap">
+        <div style="font-weight:800;font-size:1.2rem;">Settings</div>
+        <button id="settings-close" class="theme-toggle" style="margin-left:auto;">Close</button>
+      </div>
+      <div class="cmdk-list" style="max-height:55vh;overflow:auto;">
+        <div class="card" style="margin:0 0 1rem;">
+          <h3 style="margin-top:0">Display</h3>
+          <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;">
+            <button id="toggle-safe" class="theme-toggle">Toggle Safe Mode</button>
+            <button id="toggle-theme" class="theme-toggle">Toggle Theme</button>
+          </div>
+        </div>
+        <div class="card" style="margin:0 0 1rem;">
+          <h3 style="margin-top:0">Developer</h3>
+          <label style="display:flex;align-items:center;gap:.6rem;">
+            <input id="dev-mode-toggle" type="checkbox" /> Developer Mode
+          </label>
+          <div id="dev-links" style="margin-top:.6rem;display:none;">
+            <a href="admin.html" class="cta-btn" target="_blank" rel="noopener">Open Admin Intake Viewer</a>
+          </div>
+          <div class="cmdk-hint">Tip: Enabling Developer Mode will auto-open the Admin Intake Viewer. It requires your secret admin key.</div>
+        </div>
+      </div>
     </div>
   </div>
   <script type="application/ld+json">
@@ -601,18 +709,32 @@
     // If coming from a demo page, show portfolio directly
     if (document.referrer && document.referrer.includes('demo-')) {
       window.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('login-box').style.display = 'none';
-        document.getElementById('portfolio-box').style.display = 'block';
-  var sl = document.getElementById('sidebar-left');
-  if (sl) sl.style.display = 'block';
-  var sr = document.getElementById('sidebar-right');
-  if (sr) sr.style.display = 'block';
-        if (typeof setActiveTab === 'function') setActiveTab('home');
-        // Show splash once per session even on demo-referrer auto entry
-        if (!sessionStorage.getItem('splashSeen') && typeof showSplash === 'function') {
-          sessionStorage.setItem('splashSeen', 'true');
-          showSplash(900);
-        }
+        try {
+          if (sessionStorage.getItem('portfolioLoggedIn') === 'true') {
+            document.getElementById('login-box').style.display = 'none';
+            document.getElementById('portfolio-box').style.display = 'block';
+            var sl = document.getElementById('sidebar-left');
+            if (sl) sl.style.display = 'block';
+            var sr = document.getElementById('sidebar-right');
+            if (sr) sr.style.display = 'block';
+            if (typeof setActiveTab === 'function') setActiveTab('home');
+            // Show splash once per session even on demo-referrer auto entry
+            if (!sessionStorage.getItem('splashSeen') && typeof showSplash === 'function') {
+              sessionStorage.setItem('splashSeen', 'true');
+              showSplash(900);
+            }
+          } else {
+            // Respect logout or fresh session: keep intake visible
+            var lb = document.getElementById('login-box');
+            if (lb) lb.style.display = 'block';
+            var pb = document.getElementById('portfolio-box');
+            if (pb) pb.style.display = 'none';
+            var sl = document.getElementById('sidebar-left');
+            if (sl) sl.style.display = 'none';
+            var sr = document.getElementById('sidebar-right');
+            if (sr) sr.style.display = 'none';
+          }
+        } catch (e) {}
       });
     }
   </script>
@@ -640,6 +762,7 @@
       } catch {}
     })();
   </script>
+  <script type="module" src="animations.js"></script>
   <script src="script.js"></script>
   <script>
     // Service Worker registration for PWA
@@ -652,7 +775,8 @@
   <script>
     // Lightweight front-end event and metrics fetch with mini sparklines + status dot
     (function () {
-      const BASE = window.__BACKEND_URL || 'http://localhost:3001';
+  const origin = window.location.origin || '';
+  const BASE = (origin && origin.startsWith('http')) ? (origin + '/api') : (window.__BACKEND_URL || 'http://localhost:3001');
       const statusDot = document.getElementById('metrics-status');
       // Fire a pageview event (best-effort)
       try { fetch(BASE + '/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'pageview', detail: { path: location.pathname } }) }).catch(()=>{}); } catch {}
@@ -795,5 +919,73 @@
       inputs.forEach(el => el && el.addEventListener('keydown', handleEnter));
     });
   </script>
+  <script>
+    // Show build/version info when Developer Mode is on
+    window.addEventListener('DOMContentLoaded', function(){
+      try {
+        const on = localStorage.getItem('ux:devMode') === 'on';
+        var b = document.getElementById('build-info');
+        if (b) b.style.display = on ? 'block' : 'none';
+      } catch {}
+    });
+  </script>
+  <script>
+    // Defensive guard: if not logged in this session, keep intake visible after load
+    window.addEventListener('DOMContentLoaded', function() {
+      try {
+        const loggedIn = sessionStorage.getItem('portfolioLoggedIn') === 'true';
+        if (!loggedIn) {
+          var lb = document.getElementById('login-box'); if (lb) lb.style.display = 'block';
+          var pb = document.getElementById('portfolio-box'); if (pb) pb.style.display = 'none';
+          var sl = document.getElementById('sidebar-left'); if (sl) sl.style.display = 'none';
+          var sr = document.getElementById('sidebar-right'); if (sr) sr.style.display = 'none';
+        }
+      } catch {}
+    });
+  </script>
+  <script>
+    // Contact form wiring
+    window.addEventListener('DOMContentLoaded', function() {
+      const form = document.getElementById('contact-form');
+      if (!form) return;
+      const nameEl = document.getElementById('contact-name');
+      const emailEl = document.getElementById('contact-email');
+      const msgEl = document.getElementById('contact-message');
+      const status = document.getElementById('contact-status');
+      const btn = document.getElementById('contact-send');
+      function setStatus(text, ok=true){ if (!status) return; status.textContent = text; status.style.color = ok ? '#2cb67d' : '#ef4565'; }
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!nameEl.value.trim() || !emailEl.value.trim() || !msgEl.value.trim()) { setStatus('Please fill all fields.', false); return; }
+        btn.disabled = true; setStatus('Sending…', true);
+        const payload = { name: nameEl.value.trim(), email: emailEl.value.trim(), message: msgEl.value.trim(), page: location.pathname, website: document.getElementById('contact-website')?.value || '' };
+        const bases = (typeof getApiBasesForNetlify === 'function') ? getApiBasesForNetlify() : [];
+        let ok = false;
+        let info = null;
+        for (const base of bases) {
+          const u = base.replace(/\/$/, '') + '/contact';
+          try {
+            const r = await fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            if (r.ok) {
+              ok = true;
+              try { info = await r.json(); } catch {}
+              break;
+            }
+          } catch {}
+        }
+        if (ok) {
+          const mailed = info && info.mailed === true;
+          const saved = info && info.saved === true;
+          const tag = mailed ? 'emailed' : (saved ? 'saved' : 'accepted');
+          setStatus(`Sent (${tag}). I’ll get back to you soon.`);
+          form.reset();
+        }
+        else { setStatus('Failed to send. Please try again later.', false); }
+        btn.disabled = false;
+      });
+    });
+  </script>
+  <script type="module" src="./testimonials.mount.js"></script>
+  <script type="module" src="./tabs.mount.js"></script>
 </body>
 </html>
